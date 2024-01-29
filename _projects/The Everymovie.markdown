@@ -6,7 +6,7 @@ thumbnail: \assets\everymovie.png
 videolink: youtube.com
 shortdescription: Minigame-based Game Jam created in 2 weeks in Unity.
 permalink: /Everymovie
-priority: 2
+priority: 3
 ---
 
 <h1>Play the Game</h1>

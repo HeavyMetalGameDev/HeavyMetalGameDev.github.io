@@ -6,7 +6,7 @@ thumbnail: \assets\
 videolink: youtube.com
 shortdescription: Physics, AI and Gameplay project created in Unity.
 permalink: /CSC3232
-priority: 5
+priority: 4
 
 ---
 

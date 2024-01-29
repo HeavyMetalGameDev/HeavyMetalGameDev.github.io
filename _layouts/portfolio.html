@@ -2,7 +2,23 @@
 layout: default
 ---
 {% assign ordered_projects = site.projects | sort:"priority"%}
+{% assign ordered_cpp_projects = site.cplusplusprojects| sort:"priority"%}
 
+<h1><b>C++ Projects</b></h1>
+{%for project in ordered_cpp_projects %}
+    <h1>{{project.title}}</h1>
+    {{project.shortdescription}} <br>
+    <a href={{project.permalink}}>
+        <img src={{project.thumbnail}} alt={{project.title}}>
+    </a>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <hr>
+    <p>&nbsp;</p>
+     
+{%endfor%}
+
+<h1><b>C#/Unity Projects</b></h1>
 {%for project in ordered_projects %}
     <h1>{{project.title}}</h1>
     {{project.shortdescription}} <br>

@@ -28,6 +28,8 @@ github_username:  HeavyMetalGameDev
 collections:
   projects:
     output: true
+  cplusplusprojects:
+    output: true
 
 
 # Build settings

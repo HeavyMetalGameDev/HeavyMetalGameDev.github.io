@@ -6,7 +6,7 @@ thumbnail: \assets\gooSurge.png
 videolink: youtube.com
 shortdescription: 2 week game jam project in Unity, made in a team with my coursemates, utilising Compute Shaders.
 permalink: /Goo-Surge
-priority: 2
+priority: 1
 ---
 
 <h1>Play the Game</h1>
@@ -15,6 +15,20 @@ priority: 2
 Goo Surge was a game made in two weeks by me and 3 of my coursemates on the Newcastle University Games Engineering Course. We had a large gap between Christmas and returning to university, so we decided to make productive use of our time and do a game jam together. We decided upon the Pirate Software Game Jam as the dates lined up well, and doing a 2 week game jam gave us much more time to get used to working with eachother and setting up the project.
 
 When starting the jam, we agreed that we wanted to focus on making something interesting from a technical standpoint, and to challenge ourselves to do something we hadn't programmed before.
+The game uses Compute Shaders to process the spreading and temperature of millions of tiles of goo, which can burn and destroy objects and walls in the level, at a playable framerate.
+
+The game was overall successful, with the main flaw being the lack of tutorial and the general confusion players felt when trying to know what to do next.
+Some key information about the project:
+- Worked in a team of 4 programmers.
+- Compute shaders used to process millions of pixels at a playable framerate.
+- Hundereds of objects checking for goo with little performance impact.
+- Destructable, tile-based level.
+- Drawing mechanic and symbol recognition to cast spells.
+- Usage of observer pattern for modular functionality.
+- I participated in some paired programming with another team member to improve the quality of code and find bugs faster.
+- Complete game loop with main menu, win/loss screens and credits.
+- Smooth controls and camera.
+- Original music and sound effects.
 
 <h1>Gameplay</h1>
 The player controls a wizard who has been tasked to break out the imprisoned goo, steal schematics and destroy as much of the facility as they can.
@@ -149,18 +163,112 @@ The reason that we have the value `2.0f/255.0f` in here is due to conversions th
 <h2>Balancing temperature</h2>
 Spreading goo is an important mechanic, but with just this, the temperature of a goo pixel would never change over time. Furthermore, if the player heats up a pixel of goo, then goo tiles around it should also heat up. We therefore had a secondary EntropyShader.compute which handles distribution of heat and the cooling down of goo.
 
+The goo constantly tends towards a middle temperature, done using a TARGET_TEMPERATURE channel. The temperature of the goo will tend towards this temperature, and then the target temperature will tend towards a value of 0.5f. This way, the player can control the target temperature of the goo to keep it hotter / cooler for longer, but it will always return to a base temperature.
+
+![image](\assets\coolingGif.gif)
+<h6>EntropyShader reducing the temperature of the hot goo and blurring it.</h6>
+
+![image](\assets\warmingGif.gif)
+<h6>EntropyShader increasing the temperature of the cold goo and blurring it.</h6>
+
+Another feature of the EntropyShader is temperature blurring. Over time, temperature values will blur together and affect nearby pixels. To do this, each pixel calculates the average temperature of a 5x5 area around it, and then sets its target temperature to this temperature. That way, hot pixels in cold areas will cool faster, and vice versa.
+
+```hlsl
+void HeatConduction(uint3 id)
+{
+    float4 values = Result[id.xy];
+    float targetTotal = 0;
+    int count = 0;
+    for (int i = -5; i < 6; i++)
+    {
+        for (int j = -5; j < 6; j++)
+        {
+            float2 temp = { i, j };
+
+            if (Result[id.xy + temp].x * 255 >= 1.0f && Result[id.xy + temp].x * 255 <= 2.0f)
+            {
+                count++;
+                float temperature = Result[id.xy + temp].y;
+                targetTotal += temperature;
+            }
+        }
+    }    
+    values.w = targetTotal/ count;
+    Result[id.xy] = values;
+}
+```
+<h6> Snippet of compute shader code to blend temperatures across the texture.</h6>
+
+
 <h2>Checking for Goo</h2>
+Objects in the game need some way of knowing if they are touching hot goo, so they can take damage and be destroyed. In out game, we had 2 types of objects:
+- Static. Static objects are fixed to the grid, and are either walls or doors. These objects impede the flow of goo until they are destroyed, at which point it allows for goo to spread again.
+- Dymanic. Dynamic objects are not fixed to the grid and do not block goo, but can still take damage from hot goo.
+
+Static objects must check the pixels adjacent to them in order to see if there is hot goo. We decided that this could be too inefficient if done every frame, so we placed this in a coroutine to check every second.
+Whenever a static object runs out of health, it needs to write to the pixels it takes up and set them to be "BLANK", so goo can flow again. Furthermore, the goo tiles need to be set to "GOO_SPREADABLE" so the shader makes them spread again. This means that statics must be able to write to the GPU side texture.
+
+Dynamic objects are much easier, as they are not fixed to the tile grid, not do they have any presence on the RenderTexture. As such, they only need to read data from the CPU side texture. Since we knew we were going to have many dynamic objects in the game, we opted to have dynamic objects only check one row of pixels, starting at the bottom of the sprite, as this is also a logical place for where they would take damage.
+
+![image](\assets\gooDestroy.gif)
+<h6>Hot goo destroying some computer desks.</h6>
+
+Checking dynamic objects is not done by the objects themselves, but instead by the Level object, which holds a reference to all dynamic objects in the scene. The main benefit of this is improved cache use, as the large goo texture only needs to be loaded into cache once before all dynamics are checked against it, resulting in the ability to check hundereds of dynamic objects every frame.
+```cs
+    void UpdateDynamics()
+    {
+        foreach (DynamicDestructable o in dynamicDestructables)
+        {
+            if (!o.active) continue;
+            for (int i = 0; i < o.GetWidth(); i++)
+            {
+                float type = gooController.GetTileValue(o.GetGooPos().x + i, o.GetGooPos().y - 1, GridChannel.TYPE);
+                if (type == (float)GridTileType.GOO_SPREADABLE || type == (float)GridTileType.GOO_UNSPREADABLE)
+                {
+                    float gooTemp = gooController.GetTileValue(o.GetGooPos().x + i, o.GetGooPos().y - 1, GridChannel.TEMP);
+
+                    if (gooTemp > gooTempThresholdDynamics)
+                    {
+                        o.GooDamage(gooTemp - gooTempThresholdDynamics);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+```
+We were initially worried how well this part of the game would perform, but it turned out to actually be the static objects that had the most performance impact, which I will discuss in the next section.
 
 <h1>Performance limitations</h1>
 Our main performance bottlenecks were not actually related to the speed of execution of the compute shaders: these had very little impact on the game. The main problem was sending data between the GPU and the CPU, as there needed to be consistency between the CPU side texture and the GPU side texture. The reason for this is that although all goo spreading and temperature logic was handled in the Compute Shader (GPU) any objects in the game such as walls, desks or tables needed to be able to check for hot goo, such that they could take damage.
 
 Throughout the project, I used Unity's profiler regularly to find which functions and parts of our code were being particularly slow.
-For example, I noticed that when first releasing the goo, the game would stutter quite badly. Upon looking at this in the profiler, the cause of the issue was actually the audio:
+For example, I noticed that when first releasing the goo, the game would stutter quite badly:
+![image](\assets\gooAudioLag.png)
+<h6>A large dip in framerate.</h6>
+ Upon looking at this in the profiler, the cause of the issue was actually the audio:
+![image](\assets\gooAudioProfile.png)
+<h6>The cause of the issue was related to audio.</h6>
+The reason for this was that the game was loading the sound effect for the siren into memory when the player released the goo, instead of loading it to memory to start with. I therefore enabled "Load in background" on the audio clip, and the problem was fixed.
 
-
+In general, the largest performance issue was stuttering that occurs when all of the static objects in the scene check for goo:
+![image](\assets\gooStaticProfile.png)
+<h6>At 1 second intervals, the game would stutter when checking statics.</h6>
+Unfortunately, we did not have enough time to fix this stutter, but the code causing the stutter was related to checking the texture for goo touching each static.
+I think the reason for this is misuse of cache: the scope of functions for checking statics was different to that of dynamics, and I think that the cache was not expoited in the same was as a result. Checking statics does check drastically more pixels (each wall tile checks 32 pixels that touch it, as opposed to a maximum of 16 pixels for dynamics), but there should not the that wide of a gap in performance.
 
 <h1>What went well</h1>
-On a technical level, I am very happy with what we managed to achieve as a team.
+On a technical level, I am very happy with what we managed to achieve as a team. For never having used compute shaders before, the game uses them appropriately and still operates at a very playable framerate
 <h1>What I would improve</h1>
-Feedback from people who played the game seemed to be mixed, with most people commenting on the interesting mechanics and liking the overall style, but finding the game to be too confusing or the goals to be poorly communicated. I definitely agree that the aim of the game was not clear enough, and the game should definitely had a tutorial, or at least more instruction on what to do. If I could go back, I would add an arrow on the UI to point the player to where they need to go.
+Feedback from people who played the game seemed to be mixed, with most people commenting on the interesting mechanics and liking the overall style, but finding the game to be too confusing or the goals to be poorly communicated. I definitely agree that the aim of the game was not clear enough, and the game should definitely had a tutorial, or at least more instruction on what to do. If I could go back, I would add an arrow on the UI to point the player to where they need to go. Here are some comments left by players:
+![image](\assets\gooFeedback1.png)
+![image](\assets\gooFeedback2.png)
+From these, it is very clear that players are not given enough instruction to play the game.
 
+The way temperature spreads around the goo is definitely functional, but I would have liked for it to be more dramatic, where heating the goo spreads it throughout other goo tiles, instead of just blurring it. If I had more time, I would have fine tuned the shaders and experimented with different functions to make the goo feel more like a liquid.
+
+The game definitely has potential to have more levels, and it would not be very difficult to add more, but for the scope of the jam we decided to limit it to one level as most of out time was spent either coding or making art assets.
+
+In terms of performance, using space partitioning to improve the performance of checking statics for goo would be a great addition, and I think would resolve the stuttering the game sometimes suffers from.
+
+If you have read to this point, thank you for spending the time to learn about the game!

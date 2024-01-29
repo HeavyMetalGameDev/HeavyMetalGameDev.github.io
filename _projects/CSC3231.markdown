@@ -6,7 +6,7 @@ thumbnail: \assets\planet.png
 videolink: https://www.youtube.com/watch?v=MHjQRban0YA
 shortdescription: Graphical project created in Unity.
 permalink: /CSC3231
-priority: 4
+priority: 2
 ---
 <h1>Summary</h1>
 For CSC3231, the task was to create a graphical scene in unity to render a planet's surface, utilising the graphical techniques we were taught in the module. The key features I implemented were:

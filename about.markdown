@@ -10,7 +10,7 @@ My programming interests vary: I typically find any aspect of games programming 
 
 **I am currently working on:**
 
--Pirate Software Game Jam. Me and my coursemates decided to work on a game jam together, and this one in particular suited our timeframe and intentions well. The main focus of the game is to do some technically interesting mechanics (which may not be new to games in general, but theyre new to us!) such as compute shaders and recognising a player's drawing strokes. This is made in the Unity game engine.
+-University Team project. A C++ team project to create a game, basically from scratch, in 8 weeks!
 
 -Hogworld. Hogworld was born out of the intention to create a finished, interesting portfolio piece, and will be a small videogame created in Unity. My main reason for doing this project was to try some systems I have not done before, such as programming a tile based world and interaction system from scratch, and a dialogue system.
 

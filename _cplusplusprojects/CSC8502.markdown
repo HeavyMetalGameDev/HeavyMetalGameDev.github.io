@@ -38,6 +38,10 @@ Deferred rendering was covered in the tutorials, but not in full: the tutorial w
 <h6>By multiplying by either isLit or (1-isLit), we can alter how unlit objects are rendered.</h6>
 
 For transparent objects, I simply do not render them in the first pass or the lighting pass, and instead render them afterwards. This does however mean that transparent objects cannot be lit or affected by lighting, which is a flaw in my renderer, but I did not have time to research solutions to this issue, and it is not really noticable in my scene as the only transparent object is the water.
+
+![image](\assets\deferred.gif)
+<h6>Multiple light sources and working skybox with deferred rendering.</h6>
+
 <h2>Particle system</h2>
 Particle systems were not covered in the tutorials, so I decided to find out some ways to implement them. I found <a href="http://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/particles-instancing/">this tutorial</a> and followed the implementation, making some changes along the way. For example, I removed some of the fields for the particle struct, as I did not care about the weight and size of the particles for the purpose of my project. I also initially decided to allow for animated particles, storing the current frame of animation the particle was on, but I decided against this due to the time constraints. My particle system uses GPU instancing, so that all particles can be rendered with a single OpenGL draw call. As such, there was very little performance impact, even with a large amount of particles.
 
