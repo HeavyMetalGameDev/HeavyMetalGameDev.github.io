@@ -9,5 +9,13 @@ permalink: /CSC3232
 priority: 4
 
 ---
+CSC3232 Game Technologies was a third-year module. The coursework was to build a game from scratch in Unity, using various features we were taught in the module. The main features of my game were:
+- Simple state machine controlled opponents.
+- Opponents that use Goal-Oriented Action Planning.
+- A boss that uses the Minmax algorithm.
+- A custom character controller.
+- Randomised guns including projectile, hitscan and explosive weapons.
+- A main menu that uses a hierarchical state machine.
+- 
 
-CSC3232 was cool!
+The game I created was Mean Green Fellow 2, a title gained from a previous coursework. You play as a goblin in a castle environment, going from level to level fighting other goblins with randomised guns until you reach the boss. Along the way there are chests to find which grant you new weapons.

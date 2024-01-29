@@ -44,11 +44,16 @@ Overall, I would have liked to add many more games, and I think there is infinit
 <h1>Art</h1>
 As I am not a very talented artist when it comes to drawing, I took a different approach to create the "3D" art for the project (such as the background to the Back to the Future game, or the weapon in the Ghostbusters game). I created a new 3D Unity project, build the scenes I wanted in 3D instead of drawing them, then took image captures of the angles that I wanted. I then added the new 2D images into The Everymovie, and I think the effect was successful, especially its use in the Back To The Future game.
 This did cause a slight clash in art styles, however the game still looked visually interesting and that is what matters most.
+![image](\assets\movieSpider.gif)
+<h6>Losing makes the audience throw popcorn!</h6> 
 <h1>Technical Details</h1>
 In terms of technical details for the project, there is not much to talk about, as the game was quite simple and there was at no point concerns about performance.
 I wanted the game to look pixelated where the screen was a constant pixel size, and I used a little trick to achieve this. My camera, pointed at the game, renders to a RenderTexture instead of the screen. Then, elsewhere in the Unity scene, there is a quad which presents the RenderTexture to another camera. This camera however has the Pixel Perfect attachment, meaning it will always have a constant pixelation effect. The reason I did this was because having the standard camera with the pixel perfect attachment was causing issues in how things were scaled and rendered, and my workaround solved these issues. I think the end result was successful in what I wanted the game to be visually, and the game still performed adequately.
 
 Making the game run on the web was very easy, as Unity has support for WebGL builds, as long as the game does not use any unsupported features such as Compute Shaders.
+
+![image](\assets\movieGhoul.gif)
+<h6>Ghoulbusters minigame.</h6> 
 
 <h1>What went well</h1>
 Winning the jam was a good feeling, and made me feel even more proud of what I managed to create. The way I handled going from minigame to minigame was quite intuitive to add new minigames: make a new prefab, make sure it has a "Minigame" script, and thats essentially all that was required. As long as somewhere in the minigame the event to end the minigame was called, it was valid.
