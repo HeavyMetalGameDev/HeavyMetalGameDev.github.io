@@ -8,7 +8,7 @@ shortdescription: 2 week game jam project in Unity, made in a team with my cours
 permalink: /Goo-Surge
 priority: 1
 ---
-
+Game thumbnail art by <a href = "https://junkyx1122.github.io/">Erick (click for link)</a>
 <h1>Play the Game</h1>
 <iframe frameborder="0" src="https://itch.io/embed/2492552?link_color=d55bfa" width="552" height="167"><a href="https://nijelous.itch.io/goo-surge">Goo Surge by Nijelous, JunkyX1122, HeavyMetalGameDev, benblack90</a></iframe>
 <h1>Summary</h1>
@@ -49,7 +49,7 @@ From a gameplay standpoint, the mechanic was a good addition to the game, as it 
 <h1>The Goo</h1>
 <h2>Data</h2>
 We decided early on that the main way the player would interact with the goo would be by heating it up. As such, we knew we needed a way to both store the temperature on a per pixel basis, and to run code on each tile of goo every time we wanted to update it. With a technical challenge such as this, we agreed that we had do these calculations on the GPU, as this was a very parallel problem. Therefore, we decided to attempt to do this using Compute Shaders, something none of us had never done before.
-My and my teammate <a href = "https://benschwarz90.wixsite.com/portfolio">Ben (click for link)</a> were responsible for the goo mechanics in the game, whilst our other team members worked on the Rune Drawing and Tile Grid mechanics respectively.
+My and my teammate <a href = "https://benschwarz90.wixsite.com/portfolio">Ben (click for link)</a> were responsible for the goo mechanics in the game, whilst our other team members <a href = "https://alexfalldev.wordpress.com/">Alex (click for link)</a> and <a href = "https://junkyx1122.github.io/">Erick (click for link)</a> worked on the Rune Drawing and Tile Grid mechanics respectively.
 To store the information for the goo, we decided to use a texture instead of a buffer. This was for a few reasons.
 
 Firstly, textures are easy data containers to use with shaders, as there is very little manual setup: Unity's Compute Shaders by default use RenderTextures. Secondly, we knew that the number of types of data would match up with the number of texture channels: one channel for the type of goo, one channel for temperature of the goo, one channel to track how long until a goo tile spreads, and one channel for a target temperature for the goo to reach over time.

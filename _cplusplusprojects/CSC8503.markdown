@@ -9,4 +9,104 @@ permalink: /CSC8503
 priority: 2
 ---
 
-CSC8503 was cool!
+<h1>Summary</h1>
+CSC8503 was a module focused on programming physics, networking and AI into a game in C++. The main features of my game were:
+<h3>Physics</h3> 
+- Collisions for Sphere-Sphere , Sphere-AABB, Sphere-OBB, AABB-AABB, Capsule-Sphere, Capsule-AABB 
+- Ray collisions for all types. 
+- Physics materials with changeable coefficient of restitution, vertical damping and horizontal damping. 
+- Collision layers so objects can ignore collisions with each other. 
+- Raycast collision layers. 
+- Quad tree broad phase for faster processing. 
+- Static and dynamic objects, where collisions between static objects are not considered. 
+- Sleeping and awake objects, where collisions between sleeping objects are ignored, and static objects are also ignored. 
+- A grappling hook that uses raycasts to allow the player to grapple towards static objects, and pull dynamic objects towards them. 
+- Trigger volumes used for a jump pad, and used to allow the player to pick up and throw objects when the trigger is over a dynamic object. 
+
+<h3>AI </h3>
+- A state machine enemy that will patrol between points, run towards the player if it can see them, shoot the player if it is close enough, pathfind to get to the player if it cannot see them, and then return to patrolling if the player hides for long enough. 
+- Pathfinding that can be executed multiple times by the enemy to navigate the world. 
+- A simple behaviour tree powered enemy that stays near the treasure and provides resistance when it detects that the player is trying to steal the treasure, until it eventually gives up. 
+- Both of these enemies work in single player and in multiplayer, where they are controlled by the server in multiplayer. 
+- Pushdown automata used for the main menu, including the ability to pause the game in singleplayer. 
+
+<h3>Networking </h3>
+- The game can be started as a client or a server. 
+- When the player joins a server, the server sends a message to all players and the correct number of player objects are added. 
+- Player inputs are sent to the server and processed. 
+- The server executes all physics, and the results are sent to the clients. 
+- Game information such as player health and points are sent from the server to the clients when events occur that change those values. 
+
+<h3>Other </h3>
+- Simple component system for easily adding functionality to game objects. This is not a full Entity Component System but for the purposes of the coursework it is sufficient. 
+<h1>Extensions of the tutorials</h1>
+Similarly to CSC8502, some of this was covered in tutorial content, and the main extensions were:
+- Various physics engine improvements, with physics materials, static and dynamic objects, object sleeping, collision layers and trigger volumes.
+- A complete state machine based enemy, which uses pathfinding to chase the player and attack them.
+- Basic implementation of networking, to a degree that was not covered in the tutorials.
+
+<h1>Physics</h1>
+The codebase for the coursework included some physics code already, and following the tutorial content led to working Axis Aligned Bounding Box, plane, and sphere collisions, with raycast checks for all of these also implemented. The missing collisions were Oriented Bounding Boxes against AABBs, spheres and capsules, and capsule-capsule collisions.
+
+The implementation of capsules was very minimal to start off with, and I managed to implement AABB-Capsule, Sphere-Capsule, OBB-Capsule and Sphere-OBB, but not OBB-Capsule or Capsule-Capsule.
+
+There were some physics features that I was aware were standard, but were missing from the engine. I knew about these features mainly because of their inclusion in the Unity game engine, and I decided to implement them myself, to the best of my knowlege.
+
+For Physics materials, I made a simple struct which stored coefficient of restitution, and a few different damping values for extra control over how physics objects behaved.
+```cpp
+struct PhysicsMaterial
+{
+	float e = 0.3f;
+	float linearDampHorizontal = 1.0f;
+	float linearDampVertical = 0.4f;
+	float angularDamp = 1.0f;
+};
+```
+<h6>PhysicsMaterial struct.</h6>
+PhysicsObjects in the game store a pointer to a PhysicsMaterial, so when updating the game's physics, these values can be retrieved and used to modify the result.
+My main reason for splitting linear damping into vertical and horizontal was to fine tune the player's controls: by damping more horizontally, the player comes to a stop faster when moving, resulting in controls that feel less slippery. Damping vertical velocity seperately means I could tweak the player's movement without altering how their jump performed.
+
+<h2>Picking Up Objects</h2>
+In my game, I wanted the player to be able to pick up objects and carry them around, to allow for physics puzzles in my game. This mechanic was very much inspired by the Source engine, and the games made in it such as Half Life 2 and Garry's mod.
+To allow the player to pick up objects, there needed to be a way to detect what objects the player could pick up. There were 3 ways I thought to do this:
+- Raycast from the camera and if the ray hits an object that can be picked up, and the player is close enough, then pick it up. This would make picking up objects very precise and might be frustrating.
+- Get all of the objects that are close to the player, and if one is close enough, then pick it up. This could lead the player to pick up objects they did not want to pick up.
+- Have a sphere collider a fixed distance away from the player that moves as the player looks around, and if this is colliding with an object that can be picked up, then pick it up.
+
+I opted to go for the third option, as this was the most sensible and would feel the best for the player.
+```cpp
+Vector3 ObjectPickupComponent::CalculateLookDirection() {
+    float camYaw = camera->GetYaw();
+    float camPitch = camera->GetPitch();
+	float normYaw = camYaw > 180 ? camYaw - 360 : camYaw; //get yaw between -180 and 180
+	normYaw = normYaw * DEGREES_TO_RAD;
+
+	//convert from pitch/yaw to directions
+	float xDir = cos(normYaw) * cos(camPitch * DEGREES_TO_RAD);
+	float yDir = sin(camPitch * DEGREES_TO_RAD);
+	float zDir = sin(-normYaw) * cos(camPitch * DEGREES_TO_RAD);
+
+	return Vector3(zDir, yDir, -xDir);
+}
+```
+<h6>Converting from camera pitch and yaw values into a Vector3 direction. The trigger is then offset by a multiple of this vector.</h6>
+
+To make an object "picked up", a constant force is applied towards the centre of this pickup trigger, which is proportional to distance. Through a simple Hooke's Law calculation, it was relatively easy to make picking up objects feel good for the player.
+
+![image](\assets\gooseBall.gif)
+<h6>The player can pick up and throw objects.</h6>
+
+![image](\assets\goosePull.gif)
+<h6>The player can grapple objects towards them.</h6>
+
+
+<h1>What went well</h1>
+
+
+<h1>What I would improve</h1>
+My weakest aspect in this module was definitely my implementation of collision detection for the various volumes. My lack of OBB collision detection makes the physics feel very simple, even though it was not required for the game to be playable. Having OBB-Capsule at least allows for the player to run up ramps which is important.
+Another big area that my physics was lacking was no friction, meaning when objects collided with eachother, they would not rotate. This is something I would have really liked to implement, but I did not want to spend too much time on the physics as, at the time, I still had the AI and networking parts of the coursework to implement.
+
+The gameplay loop was also very weak and simple.
+
+The networked aspect of the game was functional only on a local host, though there was no expectation of the coursework to run across multiple machines. Furthermore, my networking was done using full packets only, instead of the much more efficient delta packets. This was purely a time constraint as I could have figured out how to implement both full and delta packets given a few more days.
