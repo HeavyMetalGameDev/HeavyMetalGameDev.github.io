@@ -31,7 +31,7 @@ The tutorial content for this module covered a variety of graphical topics, but 
 
 <h2>Deferred Rendering</h2>
 Deferred rendering was covered in the tutorials, but not in full: the tutorial was not able to render unlit fragments (such as the skybox, a vital part of the scene) or transparent fragments. I therefore had to do extra work to figure out how to get these to work. For unlit fragments, I noticed that in the first render pass that draws all objects in the scene, the alpha channel of the normal texture is not used. I repurposed this channel to hold whether a fragment should be lit or not. Then, in the shader which combines the diffuse pass and the lighting pass, I sample this value and store it in the isLit variable, and since it is always either 0 or 1, I can multiply my lighting calculations by it to turn them on or off on a per fragment basis.
-```GLSL
+```glsl
 	fragColour.xyz = diffuse * 0.1 * isLit + diffuse * (1-isLit);
 	fragColour.xyz += diffuse * light * isLit;
 ```
@@ -47,7 +47,7 @@ Particle systems were not covered in the tutorials, so I decided to find out som
 
 <h2>Sprite Animation</h2>
 For the coursework, I wanted a way to render 2D sprites that face the camera. I created a vertex shader which manipulates the model-view matrix to eliminate any rotations, such that the quad is always facing the camera.
-```GLSL
+```glsl
 	vec3 modelScale = vec3(modelMatrix[0][0],modelMatrix[1][1],modelMatrix[2][2]);
 	mat4 newModel = modelMatrix;
 	newModel[0][0] = modelScale.x;

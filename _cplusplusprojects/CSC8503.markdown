@@ -9,7 +9,7 @@ permalink: /CSC8503
 priority: 2
 ---
 
-<h1>Summary</h1>
+<h1>Summary</h1> 
 CSC8503 was a module focused on programming physics, networking and AI into a game in C++. The main features of my game were:
 <h3>Physics</h3> 
 - Collisions for Sphere-Sphere , Sphere-AABB, Sphere-OBB, AABB-AABB, Capsule-Sphere, Capsule-AABB 
@@ -91,17 +91,52 @@ Vector3 ObjectPickupComponent::CalculateLookDirection() {
 ```
 <h6>Converting from camera pitch and yaw values into a Vector3 direction. The trigger is then offset by a multiple of this vector.</h6>
 
-To make an object "picked up", a constant force is applied towards the centre of this pickup trigger, which is proportional to distance. Through a simple Hooke's Law calculation, it was relatively easy to make picking up objects feel good for the player.
+To make an object "picked up", a constant force is applied towards the centre of this pickup trigger, which is proportional to distance. Through a simple Hooke's Law calculation, it was relatively easy to make picking up objects feel good for the player. I wanted it to still feel slightly springy, to convey a feeling of weight in the objects. After some tweaking, I decided on another improvement: changing an object's PhysicsMaterial while picking it up, and swapping it back afterwards. The reason I did this was because I wanted objects that were picked up to move faster but slow down much quicker, so I increased the force being applied but also increased the damping in a new PhysicsMaterial.
 
 ![image](\assets\gooseBall.gif)
 <h6>The player can pick up and throw objects.</h6>
 
+Another physics-based mechanic I added to the game was a grapple hook. For this, I wanted it to behave differently depending on if the player grappled a static wall or a dynamic object. If they grapple a wall, they should be pulled towards it, if they grapple an object, the object should be pulled to them.
+To do this, I raycast from the player and check the type of the object hit. If its static, then the point the raycast hit is used as the anchor point and the player constantly applies a force towards it. If it is dynamic, a constant force is applied to the centre of the object towards the player.
+
+
 ![image](\assets\goosePull.gif)
 <h6>The player can grapple objects towards them.</h6>
 
+<h1>AI</h1>
+
+
+<h1>Networking</h1>
+
+<h1>Simple Components</h1>
+The initial codebase for the project was not very easy to work with when it came to adding functionality to objects in the game, so I added my own component system. This was a very naive implementation, and was in no way a true Entity Component System as there was no notion of contiguous memory or an entity-component registry. I simply added a new base class, Component.h, with some easy to understand virtual functions:
+``` cpp
+class Component
+{
+public:
+	Component() { };
+	~Component() {};
+	Component(GameObject* gameObject) { this->gameObject = gameObject;}
+	virtual void Update(float dt) {};
+	virtual void PhysicsUpdate(float dt) {};
+	virtual void Start(GameWorld* gw) {};
+	virtual void OnCollisionBegin(GameObject* otherObject) {};
+	virtual void OnCollisionStay(GameObject* otherObject) {};
+	virtual void OnCollisionEnd(GameObject* otherObject) {};
+
+	protected:
+		GameObject* gameObject;
+	};
+```
+The heavy use of virtual functions is obviously not the most efficient approach to object functionality, due to the added vtable lookups, but for the purposes of the coursework it provided a very easy way to make objects in my game do things. The methods of the class are heavily inspired by Unity's MonoBehaviour methods, and I wanted them to be used in basically the exact same way: Update() called every frame, PhysicsUpdate() called every time physics was updated, and so on.
+
+To call these functions, the GameObject class was extended to store a vector of Components. GameObject will iterate through each component and call the appropriate virtual function whenever it is necessary, and as such, each component gets a chance to call their code.
+Making new functionality involved subclassing Component and overriding the necessary methods, then instantiating it and linking it to a GameObject when the GameObject was created.
+
 
 <h1>What went well</h1>
-
+I am quite happy with how my player movement felt, as it behaved very much like how you would expect a first person controller in a normal video game to. My pickup mechanic was also good and was close to how I envisioned it when I thought of the idea.
+Although my networking was not very impressive and was missing many features, I am still very happy with the extent that it functioned, considering I implemented it in only a few days. I am especially happy with the fact I managed to handle players joining the game for all current players.
 
 <h1>What I would improve</h1>
 My weakest aspect in this module was definitely my implementation of collision detection for the various volumes. My lack of OBB collision detection makes the physics feel very simple, even though it was not required for the game to be playable. Having OBB-Capsule at least allows for the player to run up ramps which is important.
