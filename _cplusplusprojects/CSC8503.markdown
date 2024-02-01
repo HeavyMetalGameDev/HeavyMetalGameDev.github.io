@@ -56,10 +56,10 @@ For Physics materials, I made a simple struct which stored coefficient of restit
 ```cpp
 struct PhysicsMaterial
 {
-	float e = 0.3f;
-	float linearDampHorizontal = 1.0f;
-	float linearDampVertical = 0.4f;
-	float angularDamp = 1.0f;
+	float e;
+	float linearDampHorizontal;
+	float linearDampVertical;
+	float angularDamp;
 };
 ```
 <h6>PhysicsMaterial struct.</h6>
@@ -104,9 +104,27 @@ To do this, I raycast from the player and check the type of the object hit. If i
 <h6>The player can grapple objects towards them.</h6>
 
 <h1>AI</h1>
+For the AI of the game, I decided that I should add only 2 enemies: one using a state machine, one using behaviour trees. Both of these techniques were covered in the tutorial content, but not to a degree that resulted in an enemy.
+For my state machine enemy, I wanted it to behave like a very simple, FPS style enemy: patrol between points until it sees the player - > chase the player until they are close enough - > shoot the player.
+![image](\assets\gooseState.png)
+<h6>State Machine diagram for the enemy.</h6>
+The enemy cannot be killed as they have no health and the player has no attack: they are simply an obsticle to avoid. I could have added this ability, but I wanted the enemy to always have presence.
+A key part to make this enemy function was to integrate pathfinding into the state machine: if the enemy is chasing the player but cannot see them, then they must navigate around walls in the level to see them.
+Thankfully, my level was all block based, and as such setting nodes in the graph for pathfinding was very easy. Any space that did not have a block was traversable by the enemy. The enemy only performs an A* search if the player has moved at least 1 block away from the enemy's current goal node, as only then could the player has possibly moved to a new area.
+
+![image](\assets\gooseEnemy.gif)
+<h6>State machine enemy chasing and shooting the player.</h6>
+
+The behaviour tree enemy is not really an enemy: they are even more of an obsticle than the state machine enemy. They have these behaviours: hover in the air, pull back the treasure, or return to their start point.
+![image](\assets\gooseBehav.png)
+<h6>This combines selections and sequences to make the enemy do things.</h6>
+By having an isTreasureStolen node as the first action in the left sequence, the whole sequence will fail if the treasure has not been stolen, and therefore the root selector will perform the right subtree.
+
+These enemies are very simplistic, but still provided further interest and challenge for the player.
 
 
 <h1>Networking</h1>
+The networking part of this project was definitely the messiest part, as I created the rest of the game without networking in mind, thinking I would not have the time to get round to it. However, I decided to give it a go anyway, and although it resulted in a codebase I am not very happy with, the result was functional and playable between multiple instances on the same localhost.
 
 <h1>Simple Components</h1>
 The initial codebase for the project was not very easy to work with when it came to adding functionality to objects in the game, so I added my own component system. This was a very naive implementation, and was in no way a true Entity Component System as there was no notion of contiguous memory or an entity-component registry. I simply added a new base class, Component.h, with some easy to understand virtual functions:
