@@ -117,7 +117,7 @@ Thankfully, my level was all block based, and as such setting nodes in the graph
 
 The behaviour tree enemy is not really an enemy: they are even more of an obsticle than the state machine enemy. They have these behaviours: hover in the air, pull back the treasure, or return to their start point.
 ![image](\assets\gooseBehav.png)
-<h6>This combines selections and sequences to make the enemy do things.</h6>
+<h6>The behaviour tree uses a combination of selectors and sequences.</h6>
 By having an isTreasureStolen node as the first action in the left sequence, the whole sequence will fail if the treasure has not been stolen, and therefore the root selector will perform the right subtree.
 
 These enemies are very simplistic, but still provided further interest and challenge for the player.
@@ -125,6 +125,58 @@ These enemies are very simplistic, but still provided further interest and chall
 
 <h1>Networking</h1>
 The networking part of this project was definitely the messiest part, as I created the rest of the game without networking in mind, thinking I would not have the time to get round to it. However, I decided to give it a go anyway, and although it resulted in a codebase I am not very happy with, the result was functional and playable between multiple instances on the same localhost.
+So far in the coursework, I just had the singleplayer game handle all processing, including physics and AI. However, when moving to networking, I decided to delagate these things to the server instead, as this is the typical approach to make sure the objects on all clients match up in a real time game.
+For networking, I had a few different types of packets which were used between clients and servers:
+- FullPacket. This sends the data of an object in that game that should have its physics networked (position and orientation). The server sends these to clients after processing physics.
+- ClientPacket. This is sent from the client to the server, and contains inputs from the client. This is in the form of a `bool[8]`, with each element representinf if a button is pressed or not.
+- GameInfoPacket. This is sent from server to client and contains health, points and collectables of a specific player.
+- PlayerConnectPacket. This is a packet that is sent from client to server when the client joins the server, so the server knows a player has successfully connected.
+- PlayerConnectServerAckPacket. This packet is sent from server to all clients once the server receives a PlayerConnectPacket. It lets all the clients know how many players are currently connected, so the newly joined client can create the correct number of player objects, and the old clients can create a new player and assign the correct networkID.
+
+```cpp
+struct ClientPacket : public GamePacket {
+	int		objectID;
+	bool	buttonstates[8];
+	//buttonstates[0] = W
+	//buttonstates[1] = A
+	//buttonstates[2] = S
+	//buttonstates[3] = D
+	//buttonstates[4] = Space
+	//buttonstates[5] = Right Click
+	//buttonstates[6] = Left Click
+	//buttonstates[7] = E
+	float camPitch;
+	float camYaw;
+
+	ClientPacket() {
+		type = Client_State;
+		size = sizeof(ClientPacket) - sizeof(GamePacket);
+	}
+};
+```
+<h6>ClientPacket, that sends inputs from client to server.</h6>
+
+I store the player inputs in a map structure, with a key of the networkID of the player and the values being a `bool[8]`. This way, each client's inputs from the last packet are stored and can be used in game functionality.
+```cpp
+void TutorialGame::ProcessClientInput(ClientPacket* p) {
+
+	playerInputsMap[p->objectID][0] = p->buttonstates[0];//w
+	playerInputsMap[p->objectID][1] = p->buttonstates[1];//a
+	playerInputsMap[p->objectID][2] = p->buttonstates[2];//s
+	playerInputsMap[p->objectID][3] = p->buttonstates[3];//d
+	playerInputsMap[p->objectID][4] = p->buttonstates[4];//space
+	playerInputsMap[p->objectID][5] = p->buttonstates[5];//left click
+	playerInputsMap[p->objectID][6] = p->buttonstates[6];//right click
+	playerInputsMap[p->objectID][7] = p->buttonstates[7];//e
+
+	playerCameraMap[p->objectID].pitch = p->camPitch;
+	playerCameraMap[p->objectID].yaw = p->camYaw;
+}
+```
+<h6>Method to process the data from a client packet. playerInputsMap is used to move the player objects.</h6>
+
+With these packets, most of my game functioned the same in multiplayer. There were some missing features however, as if an object is destroyed in the server (such as a door being opened), there is no packet to tell the clients to delete it, and therefore the clients still render the object. I created a DisableObjectPacket, but did not have time to implement the sending and receiving of it.
+
 
 <h1>Simple Components</h1>
 The initial codebase for the project was not very easy to work with when it came to adding functionality to objects in the game, so I added my own component system. This was a very naive implementation, and was in no way a true Entity Component System as there was no notion of contiguous memory or an entity-component registry. I simply added a new base class, Component.h, with some easy to understand virtual functions:
