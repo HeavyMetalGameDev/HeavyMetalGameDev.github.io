@@ -2,20 +2,122 @@
 
 layout: project
 title: CSC3232 Mean Green Fellow 2
-thumbnail: \assets\
+thumbnail: \assets\gobThumb.png
 videolink: youtube.com
 shortdescription: Physics, AI and Gameplay project created in Unity.
 permalink: /CSC3232
 priority: 4
 
 ---
+<h2>Grade: 92%</h2>
+<h1>Summary</h1>
 CSC3232 Game Technologies was a third-year module. The coursework was to build a game from scratch in Unity, using various features we were taught in the module. The main features of my game were:
 - Simple state machine controlled opponents.
 - Opponents that use Goal-Oriented Action Planning.
+- Pathfinding using Unity's NavMesh system.
 - A boss that uses the Minmax algorithm.
+- Flocking.
 - A custom character controller.
 - Randomised guns including projectile, hitscan and explosive weapons.
 - A main menu that uses a hierarchical state machine.
-- 
 
-The game I created was Mean Green Fellow 2, a title gained from a previous coursework. You play as a goblin in a castle environment, going from level to level fighting other goblins with randomised guns until you reach the boss. Along the way there are chests to find which grant you new weapons.
+The game I created was Mean Green Fellow 2, a title gained from a previous coursework. You play as a goblin in a castle environment, going from level to level fighting other goblins with randomised guns until you reach the boss. Along the way there are chests to find which grant you new weapons. The game is inspired by roguelike games such as <a href= "https://gfr.luckycalf.com/en/">Gunfire Reborn</a> when it comes to the randomised weapons, movement mechanics and perma-death.
+
+<h1>AI</h1>
+In the game, I had turrets controlled by a simple state machine AI:
+```csharp
+private void Update()
+{
+    switch (state)
+    {
+        case State.Operating:
+            RotateToPlayer();
+            if (fireTimer >= fireDelay)
+            {
+                if (CanSeePlayer())
+                {
+                    CreateBullet();
+                    fireTimer = 0f;
+                }
+            }
+            fireTimer += Time.deltaTime;
+            break;
+
+        case State.Disabled:
+            disableTimer += Time.deltaTime;
+            if (disableTimer >= respawnTime)
+            {
+                BecomeOperating();
+            }
+            break;
+
+        case State.Overclock:
+            RotateToPlayer();
+            if (fireTimer >= fireDelay * overclockMultiplier)
+            {
+                if (CanSeePlayer())
+                {
+                    CreateBullet();
+                    fireTimer = 0f;
+                }
+            }
+            fireTimer += Time.deltaTime;
+            break;
+
+    }
+}
+```
+An enum based state machine isn's the best approach, as it make sit hard to add new states when the machines get larger and more complex, but for the purposes of the coursework and in the context of the enemy, a state machine like this was perfectly reasonable and functional.
+
+Most of the enemies in my game use Goal-Oriented Action Planning. To do this, I had help from  <a href="https://gamedevelopment.tutsplus.com/goal-oriented-action-planning-for-a-smarter-ai--cms-20793t">this article and the code attached.</a> Although the behaviour of my enemies is very simple and could have also been achieved using a state machine, the coursework specification required me to use GOAP, and the end result still functions as intended. Some enemies will throw axes at the player form afar, until the player gets too close, in which case they will try to melee them.
+
+![image](\assets\gobCombat.gif)
+<h6>Combat involves fighting multiple types of enemies at once in different levels.</h6>
+
+At the end of the game, there is a final boss that uses the Minmax alrogithm to decide its attacks. My implementation of this did not fully function however. Furthermore, the real time nature of the game did not lend itself well to Minmax, as this is usually a more turn-based algorithm, but I had to add it in regardless.
+
+Flocking is not used in a gameplay sense. For visual flair, it is used on a crowd of birds that can be found in the game, which fly away when the player gets too close.
+
+![image](\assets\gobFlock.gif)
+<h6>Flocking used for a crowd of birds.</h6>
+
+<h1>Movement</h1>
+I wanted movement in the game to feel snappy and responsive, so I created my own player controller with my own custom calculations. The end result created exactly the type of movement I wanted.
+I also added a dash mechanic: the player can tap the shift key to dash in the direction they are moving, which is on a short cooldown. This mechanic was mainly inspired by <a href= "https://gfr.luckycalf.com/en/">Gunfire Reborn</a>, a game I was enjoying at the time.
+
+![image](\assets\gobDash.gif)
+<h6>The player has a dash they can use to evade attacks and traverse the map faster.</h6>
+
+My creating the system myself, I had much finer control over how the player movement felt compared to using Unity's RigidBody system.
+
+<h1>Randomisation</h1>
+One of the main mechanics of the game is gun randomisation: any gun that appears in the game will have some randomised properties. The randomised properties are:
+- Fire rate.
+- Damage.
+- Hitscan / Projectile / Explosive.
+- Affected by gravity.
+- Number of bullets per shot.
+
+There are also 5 different types of weapons: pistol, shotgun, rifle, SMG and sniper. These types have influence over the previous 5 characteristics, with shotguns firing slower but having more bullets per shot, and SMGs having lower damage but much higher fire rate, for example.
+
+If a weapon is a projectile weapon, there is some further randomisation to determine if the shots bounce or not, and if they are affected by gravity. This also applies for explosive weapons.
+Randomised weapons can be obtained from chests.
+
+![image](\assets\gobChest.gif)
+<h6>Randomised weapons dropped from chests.</h6>
+
+Explosive weapons deal damage in an area, and also apply knockback. They do not damage the player, and this can can be used for extra movement options like rocket-jumping.
+
+![image](\assets\gobExplode.gif)
+<h6>Explosive weapons knock objects and the player back.</h6>
+
+<h1>What Went Well</h1>
+I was happy with my mark on the project and the feedback I recieved was helpful and clearly showed that the marker had played and enjoyed the game.
+My movement system worked well for the game, even though some improvements could be made.
+One of my favourite aspects of the game I made was actually the healthbars and hit numbers on the enemies and objects. I think they work very well and are clearly readable and understandable, and operate as they would in a real game.
+<h1>What I would improve</h1>
+The game overall felt very unpolished, with a lack of gun animations and sound, and a very basic UI, though I was not marked on these things. With extra time, I would polish these things and likely improve the game a lot visually.
+The game had a money mechanic, gained from killing enemies and opening chests, but I did  not have the time to capitalise on this much. In the game, you will occasionally enter a shop after beating a level, but the only thing for sale is a health refil. With more time, I would have liked to add extra items for sale in the shop, such as better guns or possibly passive items, a staple of the roguelike genre.
+There was a small number of levels and therefore the game became very repetitive quickly, so more levels would definitely improve the experience.
+The movement overall felt good but there was a slight bug to do with the player's vertical velocity. If the player got stuck on the side of an object, their vertical velocity would continue to increase even though they were not falling, which furthermore
+

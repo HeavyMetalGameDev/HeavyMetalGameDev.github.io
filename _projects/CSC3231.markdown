@@ -8,6 +8,7 @@ shortdescription: Graphical project created in Unity.
 permalink: /CSC3231
 priority: 2
 ---
+<h2>Grade: 100%</h2>
 <h1>Summary</h1>
 For CSC3231, the task was to create a graphical scene in unity to render a planet's surface, utilising the graphical techniques we were taught in the module. The key features I implemented were:
 - Procedural generation for the surface of the planet, using layers of perlin noise.

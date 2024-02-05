@@ -8,7 +8,7 @@ shortdescription: Physics, AI and Networking project created using C++.
 permalink: /CSC8503
 priority: 2
 ---
-
+<h2>Grade: 100%</h2>
 <h1>Summary</h1> 
 CSC8503 was a module focused on programming physics, networking and AI into a game in C++. The main features of my game were:
 <h3>Physics</h3> 
@@ -176,6 +176,9 @@ void TutorialGame::ProcessClientInput(ClientPacket* p) {
 <h6>Method to process the data from a client packet. playerInputsMap is used to move the player objects.</h6>
 
 With these packets, most of my game functioned the same in multiplayer. There were some missing features however, as if an object is destroyed in the server (such as a door being opened), there is no packet to tell the clients to delete it, and therefore the clients still render the object. I created a DisableObjectPacket, but did not have time to implement the sending and receiving of it.
+
+![image](\assets\gooseMult.gif)
+<h6>Two clients in the same game.</h6>
 
 
 <h1>Simple Components</h1>

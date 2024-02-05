@@ -5,5 +5,10 @@
 layout: home
 ---
 
-I'm HeavyMetalGameDev, welcome to my website.
+<h1>I'm HeavyMetalGameDev, welcome to my portfolio website.</h1>
+
+To see my projects, go to my Portfolio page.
+
+<h1>Most Recent</h1>
+<a href = "/Goo-Surge">![image](\assets\gooSurge.png)</a>
 

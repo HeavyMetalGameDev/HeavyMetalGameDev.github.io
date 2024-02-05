@@ -8,7 +8,7 @@ shortdescription: Graphical project created using C++ and OpenGL.
 permalink: /CSC8502
 priority: 1
 ---
-
+<h2>Grade: 95%</h2>
 <h1>Summary</h1>
 For CSC8502, the specification was to create a graphical scene of a planet surface, which transitions to a space scene some way. The module had a variety of tutorial content to teach us the basics of OpenGL and common techniques. The main features of my scene were:
 - Deferred rendering with multiple moving lights in the scene. This also supports unlit objects (such as sprites and the skybox) and transparent objects (such as the lake). 
