@@ -3,7 +3,7 @@
 layout: project
 title: CSC8502 Greenbulon 7
 thumbnail: \assets\greenbulon.png
-videolink: youtube.com
+videolink: https://www.youtube.com/watch?v=92fHMh4TBgQ
 shortdescription: Graphical project created using C++ and OpenGL.
 permalink: /CSC8502
 priority: 1
@@ -104,3 +104,212 @@ I enjoyed writing shaders, and it was cool to know that my code was being execut
 <h1>What I would improve</h1>
 My main flaw with the coursework, and the only area in which I think I dropped marks, was my lack of shadow mapping in the scene. This was covered in the tutorial content, which I completed and implemented in a tutorial scene, but did not get around to adding it to my coursework scene. If I had a day or two more, I think I could have achieved this.
 Additionally, my code overall was slightly messy and could definitely be more readable. In particular, my function for setting up all the objects in the scene is very long, though I could not have simplified this much without creating some sort of custom engine tool, or pulling out sections into new functions needlessly.
+
+<h1>Code Samples</h1>
+
+<h3>This is the code used to draw my animated 2D sprites, by passing the number of frames of animation adn the current frame into the shader.</h3>
+```cpp
+void DrawAnimatedNode(SceneNode* n){
+	SceneNode2DAnim* nAnim = (SceneNode2DAnim*)n;
+	BindShader(animation2DShader);
+	Matrix4 nWorld = n->GetWorldTransform();
+
+	//remove the effect of any parents on the scale component, as we want the sprite to billboard anyway
+	nWorld.values[0] = 1.0f;
+	nWorld.values[5] = 1.0f;
+	nWorld.values[10] = 1.0f;
+
+	modelMatrix =  nWorld * Matrix4::Scale(n->GetModelScale());
+	UpdateShaderMatrices();
+	GLuint shaderProgram = animation2DShader->GetProgram();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, nAnim->GetSpriteSheet());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTex"), 0);
+	glUniform1i(glGetUniformLocation(shaderProgram, "currentSprite"), nAnim->GetCurrentSprite());
+	glUniform1i(glGetUniformLocation(shaderProgram, "numOfSprites"), nAnim->GetNumberOfSprites());
+	glUniform4fv(glGetUniformLocation(shaderProgram, "nodeColour"), 1, (float*)&n->GetColour());
+
+	nAnim->Draw(*this);
+}
+```
+
+<h3>This is the fragment shader that then performs the animation, by calculating where in the sprite sheet the current sprite starts.</h3>
+```glsl
+#version 330 core
+uniform sampler2D diffuseTex;
+uniform int currentSprite;
+uniform int numOfSprites;
+
+in Vertex{
+	vec2 texCoord;
+	vec4 colour;
+} IN;
+
+out vec4 fragColour[3];
+
+void main(void)	{
+	float div = 1.0/numOfSprites;
+	vec2 newCoord = vec2(div*currentSprite + div*IN.texCoord.x,(1-IN.texCoord.y));
+	fragColour[0] = texture(diffuseTex, newCoord) * IN.colour;
+	fragColour[1].a = 0.0; //tells the combine shader that this is unlit
+}
+```
+
+<h3>When rendering either my space or planet scene, swapping scenes is done by changing the node graph, starting at a different root.</h3>
+```cpp
+void Renderer::SwapToSpaceScene() {
+	currentScene = 1;
+	ClearNodeLists();
+	camera->SetIsFixed(true);
+	SetCameraTrackSpace();
+	BuildNodeLists(spaceRoot);
+}
+
+void Renderer::SwapToPlanetScene() {
+	currentScene = 0;
+
+	ClearNodeLists();
+	camera->SetIsFixed(true);
+	SetCameraTrackPlanet();
+	BuildNodeLists(planetRoot);
+}
+```
+<h3>Since my project used deferred rendering, this was the rendering order I used:</h3>
+```cpp
+void Renderer::RenderScene() {
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	BuildNodeLists(currentScene==0?planetRoot:spaceRoot);
+	SortNodeLists();
+	FillBuffers(currentScene);
+	DrawPointLights(currentScene);
+	CombineBuffers();
+	glEnable(GL_BLEND);
+	DrawTransparentNodes(); //draw transparent nodes after lighting is performed.
+	DrawParticleSystems();
+	glDisable(GL_BLEND);
+	RunPostProcessing();
+	ClearNodeLists();
+}
+```
+
+<h3>To abstract the rendering away from my game objects slightly, I created a material class to define what shaders and textures an object should use when it is rendered, and if it should be lit.</h3>
+```cpp
+class Material
+{
+public:
+	Material(Shader* shdr, char* diffuse, char* bump, bool lit);
+	~Material();
+
+	Shader* GetShader() { return shader; }
+	void SetShader(Shader* s) { shader = s; }
+
+	GLuint GetDiffuse() { return diffuseTexture; }
+	void SetDiffuse(GLuint d) { diffuseTexture = d; }
+
+	char* GetDiffusePath() { return diffuseTexturePath; }
+	void SetDiffusePath(char* p) { diffuseTexturePath = p; }
+
+	GLuint GetBump() { return bumpTexture; }
+	void SetBump(GLuint b) { bumpTexture = b; }
+
+	char* GetBumpPath() { return bumpTexturePath; }
+	void SetBumpPath(char* p) { bumpTexturePath = p; }
+
+	bool GetIsLit() { return isLit; }
+	void SetIsLit(bool l) { isLit = l; }
+
+	void LoadShaderTextures();
+	void BindShaderTextures();
+
+protected:
+	Shader* shader;
+
+	bool isLit;
+
+	GLuint diffuseTexture;
+	char* diffuseTexturePath;
+
+	GLuint bumpTexture;
+	char* bumpTexturePath;
+};
+```
+
+```cpp
+
+Material::Material(Shader* shdr, char* diffuse, char* bump, bool lit) {
+	shader = shdr;
+	diffuseTexturePath = diffuse;
+	bumpTexturePath = bump;
+	isLit = lit;
+	LoadShaderTextures();
+}
+
+Material::~Material() {
+	glDeleteTextures(1, &diffuseTexture);
+	glDeleteTextures(1, &bumpTexture);
+}
+
+void Material::LoadShaderTextures() {
+	if(diffuseTexturePath)diffuseTexture = SOIL_load_OGL_texture(diffuseTexturePath, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+	if(bumpTexturePath)bumpTexture = SOIL_load_OGL_texture(bumpTexturePath, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+}
+
+void Material::BindShaderTextures() {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//glBindTexture(GL_TEXTURE_2D, 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, bumpTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//glBindTexture(GL_TEXTURE_2D, 0);
+}
+```
+
+<h3>This is the shader used to make the terrain look like it is glowing. The glow colour is stored in fragColour[2].</h3>
+```glsl
+#version 330 core
+
+uniform sampler2D diffuseTex;
+uniform sampler2D bumpTex;
+uniform bool isLit;
+uniform float maxGlowHeight;
+uniform float glowRange;
+
+in Vertex{
+	vec4 colour;
+	vec2 texCoord;
+	vec3 normal;
+	vec3 tangent;
+	vec3 binormal;
+	vec3 worldPos;
+} IN;
+
+out vec4 fragColour[3];
+
+void main(void)	{
+	mat3 TBN = mat3(normalize(IN.tangent), normalize(IN.binormal), normalize(IN.normal));
+
+	vec3 bumpNormal = texture2D(bumpTex, IN.texCoord).rgb * 2.0 - 1.0;
+	bumpNormal = normalize(TBN * normalize(bumpNormal));
+
+	fragColour[0] = texture2D(diffuseTex, IN.texCoord) * IN.colour;
+	fragColour[1] = vec4(bumpNormal.xyz * 0.5 + 0.5, 1.0);
+	fragColour[1].a = isLit?1.0:0.0;
+
+	vec3 GREEN = vec3(0,1,0);
+
+	fragColour[2].rgb = fragColour[0].rbg * GREEN * max(((maxGlowHeight-IN.worldPos.y)/glowRange),0);
+
+	fragColour[2].a = 1.0;
+}
+```
+
+<h2>Full code can be found at <a href = "https://github.com/HeavyMetalGameDev/CSC8502GraphicsTutorials"> this GitHub page.</a></h2>

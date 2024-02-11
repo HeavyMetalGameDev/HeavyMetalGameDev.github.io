@@ -258,7 +258,7 @@ Unfortunately, we did not have enough time to fix this stutter, but the code cau
 I think the reason for this is misuse of cache: the scope of functions for checking statics was different to that of dynamics, and I think that the cache was not expoited in the same was as a result. Checking statics does check drastically more pixels (each wall tile checks 32 pixels that touch it, as opposed to a maximum of 16 pixels for dynamics), but there should not the that wide of a gap in performance.
 
 <h1>What went well</h1>
-On a technical level, I am very happy with what we managed to achieve as a team. For never having used compute shaders before, the game uses them appropriately and still operates at a very playable framerate
+On a technical level, I am very happy with what we managed to achieve as a team. For never having used compute shaders before, the game uses them appropriately and still operates at a very playable framerate. For my first time in a project with other programmers, I thought that we worked very well together and we managed to get our code working together quite easily, thanks to good planning and organisation at the start of the project.
 <h1>What I would improve</h1>
 Feedback from people who played the game seemed to be mixed, with most people commenting on the interesting mechanics and liking the overall style, but finding the game to be too confusing or the goals to be poorly communicated. I definitely agree that the aim of the game was not clear enough, and the game should definitely had a tutorial, or at least more instruction on what to do. If I could go back, I would add an arrow on the UI to point the player to where they need to go. Here are some comments left by players:
 ![image](\assets\gooFeedback1.png)

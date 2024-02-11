@@ -3,7 +3,7 @@
 layout: project
 title: CSC8503 Average Heist of the Golden Goose
 thumbnail: \assets\goose.png
-videolink: youtube.com
+videolink: https://www.youtube.com/watch?v=Fu-9MW1snvs
 shortdescription: Physics, AI and Networking project created using C++.
 permalink: /CSC8503
 priority: 2
