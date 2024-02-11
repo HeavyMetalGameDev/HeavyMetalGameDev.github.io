@@ -103,7 +103,7 @@ For my first exposure to OpenGL, I think I created a relatively visually cohesiv
 I enjoyed writing shaders, and it was cool to know that my code was being executed on the GPU instead of the CPU: before this project, I had never done any GPU programming. I have gained more experience in shaders since this coursework (see my other projects).
 <h1>What I would improve</h1>
 My main flaw with the coursework, and the only area in which I think I dropped marks, was my lack of shadow mapping in the scene. This was covered in the tutorial content, which I completed and implemented in a tutorial scene, but did not get around to adding it to my coursework scene. If I had a day or two more, I think I could have achieved this.
-Additionally, my code overall was slightly messy and could definitely be more readable. In particular, my function for setting up all the objects in the scene is very long, and it would have ben better to use a data driven approach where objects were loaded from files instead of explicitly in code.
+Additionally, my code overall was slightly messy and could definitely be more readable. In particular, my function for setting up all the objects in the scene is very long, and it would have been better to use a data driven approach where objects were loaded from files instead of explicitly in code.
 
 <h1>Code Samples</h1>
 
