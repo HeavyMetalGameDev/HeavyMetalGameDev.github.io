@@ -218,3 +218,289 @@ Another big area that my physics was lacking was no friction, meaning when objec
 The gameplay loop was also very weak and simple.
 
 The networked aspect of the game was functional only on a local host, though there was no expectation of the coursework to run across multiple machines. Furthermore, my networking was done using full packets only, instead of the much more efficient delta packets. This was purely a time constraint as I could have figured out how to implement both full and delta packets given a few more days.
+
+<h1>Code Samples</h1>
+```cpp
+StateMachineEnemyComponent::StateMachineEnemyComponent(GameObject* g, std::vector<Vector3> pp) {
+	gameObject = g;
+	counter = 0.0f;
+	stateMachine = new StateMachine();
+	patrolPoints = pp;
+	State* patrolState = new State([&](float dt)->void {this->Patrol(dt); });
+	State* chasePlayerState = new State([&](float dt)->void {this->ChasePlayer(dt); });
+	State* shootPlayerState = new State([&](float dt)->void {this->ShootPlayer(dt); });
+	State* returnToPatrolState = new State([&](float dt)->void {this->ReturnToPatrol(dt); });
+
+	stateMachine->AddState(patrolState);
+	stateMachine->AddState(chasePlayerState);
+	stateMachine->AddState(shootPlayerState);
+
+	stateMachine->AddTransition(new StateTransition(patrolState, chasePlayerState, 
+		[&]()->bool {
+			return canSeePlayer; 
+			}));
+	stateMachine->AddTransition(new StateTransition(chasePlayerState, shootPlayerState,
+		[&]()->bool {
+			float distance = (playerObject->GetTransform().GetPosition() - gameObject->GetTransform().GetPosition()).Length();
+			return canSeePlayer && distance <= SHOOT_PLAYER_DISTANCE;
+			}));
+	stateMachine->AddTransition(new StateTransition(shootPlayerState, chasePlayerState,
+		[&]()->bool {
+			float distance = (playerObject->GetTransform().GetPosition() - gameObject->GetTransform().GetPosition()).Length();
+			return !canSeePlayer || distance >= CHASE_PLAYER_DISTANCE;
+			}));
+	stateMachine->AddTransition(new StateTransition(chasePlayerState, returnToPatrolState, 
+		[&]()->bool {
+			return !canSeePlayer && losePlayerTimer > CHASE_PLAYER_TIME;
+			}));
+	stateMachine->AddTransition(new StateTransition(returnToPatrolState, patrolState,
+		[&]()->bool {
+			float distance = (patrolPoints[currentPatrolPoint] - gameObject->GetTransform().GetPosition()).Length();
+			return distance < PATROL_RETURN_DISTANCE;
+			}));
+	stateMachine->AddTransition(new StateTransition(returnToPatrolState, chasePlayerState,
+		[&]()->bool {
+			return canSeePlayer;
+			}));
+}
+```
+<h3>Because of my component system, making objects interact was relatively easy. Here is the pickup that unlocks the player's grappling hook (UnlockGrappleComponent.cpp):</h3>
+```cpp
+void UnlockGrappleComponent::OnCollisionBegin(GameObject* other) {
+	if (other->GetTag() == "Player") {
+		PlayerInputComponent* pic;
+		if (other->TryGetComponent<PlayerInputComponent>(pic)) {
+			pic->UnlockGrapple();
+		}
+	}
+}
+```
+
+<h3>This function is used when the player grapples, and it checks if the grapple hit a static or dynamic object.</h3>
+```cpp
+void PlayerInputComponent::BeginGrapple()
+{
+	Vector3 lookDir = CalculateLookDirection();
+	Ray ray(gameObject->GetTransform().GetPosition() + Vector3(0, 0.3f, 0), lookDir);
+	RayCollision rc;
+	if (worldRef->Raycast(ray, rc, true, raycastCollideMap, gameObject)) {
+		if (((GameObject*)rc.node)->GetPhysicsObject()->IsDynamic()) {
+			grappledObject = (GameObject*)rc.node;
+			isGrapplingStatic = false;
+		}
+		else {
+			staticGrapplePoint = rc.collidedAt;
+			isGrapplingStatic = true;
+		}
+		isGrappling = true;
+	}
+}
+```
+
+<h3>The PhysicsUpdate handles any forces in the PlayerInputComponent.</h3>
+```cpp
+void PlayerInputComponent::PhysicsUpdate(float dt) {
+	if (hasJumped) {
+		gameObject->GetTransform().SetPosition(gameObject->GetTransform().GetPosition() + Vector3(0, .1f, 0));
+		physObject->ApplyLinearImpulse({ 0,jumpPower,0 });
+	}
+	hasJumped = false;
+
+	if (isGrappling) {
+		if (isGrapplingStatic) {
+			GrappleStatic();
+		}
+		else {
+			GrappleDynamicObject();
+		}
+	}
+}
+```
+
+<h3>These are the functions that handle the forces related to the grappling hook.</h3>
+```cpp
+void PlayerInputComponent::GrappleStatic()
+{
+	Debug::DrawLine(gameObject->GetTransform().GetPosition(), staticGrapplePoint);
+	if (hasUnlockedGrapple) {
+		Vector3 forceDirection = staticGrapplePoint - gameObject->GetTransform().GetPosition();
+		forceDirection.Normalise();
+		forceDirection.y *= 0.3f; //this helps make the grapple feel more like a swing
+		physObject->AddForce(forceDirection * STATIC_FORCE);
+	}
+	else {
+		Debug::Print("Grapple Not Strong Enough!", { 30,80 });
+	}
+}
+
+void PlayerInputComponent::GrappleDynamicObject()
+{
+	Debug::DrawLine(grappledObject->GetTransform().GetPosition(), gameObject->GetTransform().GetPosition());
+	Vector3 forceDirection = gameObject->GetTransform().GetPosition() - grappledObject->GetTransform().GetPosition();
+	forceDirection.Normalise();
+	grappledObject->GetPhysicsObject()->SetAwake();
+	grappledObject->GetPhysicsObject()->AddForce(forceDirection * DYNAMIC_FORCE);
+}
+```
+
+<h3>These actions are used for the enem using a behaviour tree.</h3>
+```cpp
+BehaviourAction* pullTreasure = new BehaviourAction("Pull Treasure", 
+	[&](float dt, BehaviourState state)->BehaviourState {
+		Vector3 pullDirection = (gameObject->GetTransform().GetPosition() - treasure->GetTransform().GetPosition()).Normalised();
+		treasurePhys->SetAwake();
+		treasurePhys->AddForce(pullDirection * PULL_TREASURE_AMOUNT *dt);
+		return Success;
+	}
+);
+
+BehaviourAction* isTreasureStolen = new BehaviourAction("Is Treasure Stolen", 
+	[&](float dt, BehaviourState state)->BehaviourState {
+		if ((treasure->GetTransform().GetPosition() - treasureStartPoint).LengthSquared() > DISTANCE_BEFORE_STOLEN) {
+			return Success;
+		}
+		else {
+			return Failure; 
+		}
+	}
+);
+
+BehaviourAction* pulseColours = new BehaviourAction("Pulse Colours", 
+	[&](float dt, BehaviourState state)->BehaviourState {
+		colourTimer += dt;
+		float colourMult = (sin(colourTimer) + 1) * 0.5f;
+		Vector4 colour = Debug::RED * colourMult + Debug::BLUE * (1 - colourMult);
+		gameObject->GetRenderObject()->SetColour(colour);
+		return Success;
+	}
+);
+
+BehaviourAction* stayAtHome = new BehaviourAction("Stay At Home", 
+	[&](float dt, BehaviourState state)->BehaviourState {
+		Vector3 direction = (homePoint - gameObject->GetTransform().GetPosition()).Normalised();
+		thisPhys->AddForce(direction * PULL_TREASURE_AMOUNT * dt);
+		return Success;
+	}
+);
+
+BehaviourAction* chaseTreasure = new BehaviourAction("Chase Treasure", 
+	[&](float dt, BehaviourState state)->BehaviourState {
+		if( (homePoint-treasure->GetTransform().GetPosition()).LengthSquared() >CHASE_DISTANCE)
+		return Failure;
+		Vector3 direction = (treasure->GetTransform().GetPosition() - gameObject->GetTransform().GetPosition()).Normalised();
+		thisPhys->SetAwake();
+		thisPhys->AddForce(direction * PULL_TREASURE_AMOUNT * dt);
+		return Success;
+	}
+);
+```
+
+<h3>For my PhysicsSystem's collision layer system, it references this matrix for if two objects should collide. </h3>
+```cpp
+
+enum CollisionLayers
+{
+	DEFAULT_LAYER = 1, PLAYER_LAYER = 2, STATIC_LAYER = 4, PICKUP_SPHERE_LAYER = 8
+};
+class PhysicsSystem{
+	//...
+	std::map<int,bool> layerMatrix =
+	{ {DEFAULT_LAYER | DEFAULT_LAYER,true},
+		{DEFAULT_LAYER | PLAYER_LAYER,true},
+		{DEFAULT_LAYER | STATIC_LAYER,true},
+		{DEFAULT_LAYER | PICKUP_SPHERE_LAYER,true},
+
+		{PLAYER_LAYER | PLAYER_LAYER,true},
+		{PLAYER_LAYER | STATIC_LAYER,true},
+		{PLAYER_LAYER | PICKUP_SPHERE_LAYER,false},
+
+		{STATIC_LAYER | STATIC_LAYER,false},
+		{STATIC_LAYER | PICKUP_SPHERE_LAYER,false},
+
+		{PICKUP_SPHERE_LAYER | PICKUP_SPHERE_LAYER,false}
+	};
+}
+```
+
+<h3>These are some networking related functions for handling packets being received.</h3>
+```cpp
+void TutorialGame::ReceivePacket(int type, GamePacket* payload, int source) {
+	if (isClient) {
+        ReadPacketClient(type, payload);
+	}
+	else {
+        ReadPacketServer(type, payload, source);
+	}
+}
+void TutorialGame::ReadPacketServer(int type, GamePacket* payload, int source){
+    switch (type) {
+        case Client_State: {
+            ClientPacket* realPacket = (ClientPacket*)payload;
+            ProcessClientInput(realPacket);
+            break;
+        }
+        case Player_Connected: { //this means a client is sending a connect message
+            ProcessServerPlayerConnectPacket(source, payload);
+            break;
+        }
+    }
+}
+void TutorialGame::ReadPacketClient(int type, GamePacket* payload)
+{
+    switch (type) {
+        case Full_State: {
+            ProcessClientFullPacket(payload);
+            break;
+        }
+        case Player_Connected: { //if we recieve this, it tells us a new player has connected (could be this client)
+            ProcessClientPlayerConnectedPacket(payload);
+            break;
+        }
+        case Game_info: {
+            ProcessClientGameInfoPacket(payload);
+            break;
+        }
+    }
+}
+```
+
+<h3>Here are some of the functions used above.</h3>
+```cpp
+void TutorialGame::ProcessClientPlayerConnectedPacket(GamePacket* payload)
+{
+    if (!hasClientInitialised) { //this means that this game is a new client and objects for all current players are needed
+        PlayerConnectServerAckPacket* realPacket = (PlayerConnectServerAckPacket*)payload;
+        AddPlayerToWorld(Vector3(80, 0, 10), true, false, true, realPacket->playerNetIDs[realPacket->numPlayers - 1]);
+        for (int i = 0; i < realPacket->numPlayers - 1; i++) {
+            AddPlayerToWorld(Vector3(80, 0, 10), true, false, false, realPacket->playerNetIDs[i]);
+        }
+        hasClientInitialised = true;
+    }
+    else { //this means a new player has joined the game and a new player object is needed
+        PlayerConnectServerAckPacket* realPacket = (PlayerConnectServerAckPacket*)payload;
+        AddPlayerToWorld(Vector3(80, 0, 10), true, false, false, realPacket->playerNetIDs[realPacket->numPlayers - 1]);
+    }
+}
+
+void TutorialGame::ProcessServerPlayerConnectPacket(int source, GamePacket* payload)
+{
+    if (prevClient == source)return; //if we receive lots of packets from the same client, ignore them and only send one packet back
+    PlayerConnectPacket* realPacket = (PlayerConnectPacket*)payload;
+    numPlayers++;
+    GameObject* player = AddPlayerToWorld(Vector3(80, 0, 10), true, true);
+    playerObjects.push_back(player);
+
+    GamePacket* p;
+    playerIDs[numPlayers - 1] = currentNetworkObjectID - 1;
+    PlayerConnectServerAckPacket* pac = new PlayerConnectServerAckPacket();
+    pac->numPlayers = numPlayers;
+    pac->playerNetIDs[0] = playerIDs[0];
+    pac->playerNetIDs[1] = playerIDs[1];
+    pac->playerNetIDs[2] = playerIDs[2];
+    pac->playerNetIDs[3] = playerIDs[3];
+    server->SendGlobalPacket(*pac); //tell all clients a new player has joined
+    prevClient = source;
+}
+```
+
+<h3> Full codebase can be found at <a href = "https://github.com/HeavyMetalGameDev/CSC8503/tree/main"> the GitHub page.</a></h3>
