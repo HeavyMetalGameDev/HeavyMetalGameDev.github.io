@@ -5,7 +5,7 @@
 layout: home
 ---
 
-<h1>I'm HeavyMetalGameDev, welcome to my portfolio website.</h1>
+<h1>I'm Matthew, welcome to my portfolio website.</h1>
 
 I am a graduate games programmer looking to get into the industry and learn from a talented development team. To see my projects, go to my Portfolio page.
 
