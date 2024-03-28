@@ -1,315 +1,65 @@
 ---
 
 layout: project
-title: CSC8502 Greenbulon 7
+title: Hellrunners - CSC8508 Team Project
 thumbnail: \assets\greenbulon.png
-videolink: https://www.youtube.com/watch?v=92fHMh4TBgQ
-shortdescription: Graphical project created using C++ and OpenGL.
-permalink: /CSC8502
+videolink: TBA
+shortdescription: C++ 8 week team project.
+permalink: /CSC8508
 priority: 1
 ---
-<h2>Grade: 95%</h2>
+<h2>Grade: TBD/h2>
 <h1>Summary</h1>
-For CSC8502, the specification was to create a graphical scene of a planet surface, which transitions to a space scene some way. The module had a variety of tutorial content to teach us the basics of OpenGL and common techniques. The main features of my scene were:
-- Deferred rendering with multiple moving lights in the scene. This also supports unlit objects (such as sprites and the skybox) and transparent objects (such as the lake). 
-- Transparent green water that raises/lowers over time, and uses subtle environment mapping to reflect the skybox. 
-- Terrain that appears to be lit by the lake, done by a height-based fragment shader. The effect of this is written to a new buffer texture, and is ignored when calculating lighting, such that the effect is seen even when the terrain is unlit. 
-- Particle systems using GPU instancing for rain and bubbles rising from the lake. These particles use 2D sprites and billboarding to always face the camera. 
-- Lightning which periodically strikes and illuminates the scene. 
-- Smooth transition between the two scenes, each using a different scene graph. 
-- Frustum culling to improve scene efficiently. 
-- Animated 2D sprites which use spritesheets in the fragment shader to animate over time. 
-- Animated 3D meshes which animate over time and can be lit by deferred lights. 
-- A simple material system to easilly change the textures and shaders of scene nodes, and so new scene nodes can easily be added. 
-- Post processing to introduce screen clouding as the camera approaches the clouds in the surface scene / the planet in the space scene. 
-- FXAA post processing to smooth jagged edges and to improve visual quality. 
-- A camera that moves around the scene along a track. 
-- 60fps+ on the lab pcs. 
+CSC8508 was my team project module, to create a game in C++ in 8 weeks.
+My main contributions to the project were:
+- Simple component system (created in my previous coursework, CSC8503)
+- Physics broadphase rework using Sort & Sweep.
+- Extra physics system features such as collision layers and physics materials.
+- All animation code including a simple animation transition system. This includes networking animations such that the correct animation is shown for all clients.
+- Integrating deferred rendering.
+- Level select in the lobby menu, networked across clients. This involved interfacing with Joe's LUA UI system.
+- Level transitions including a countdown and waiting for all players to finish. This includes networking level loading such that the server and clients load the same levels and begin at the same time. Also involved reworking other's code to function between levels.
+- Made sure memory management was correct when transitioning levels.
+- Editor tools in Unity such as visualisers for moving platforms. I also interfaced and extended my teammates level exporter tool.
+- Gameplay changes involving moving platforms and tweaks to movement including coyote time.
+- Networking various features such as player's speed lines.
+- Different textures per player so each player has a different look.
+And more minor changes and tweaks.
 
-<h1>Extensions of the tutorials</h1>
-The tutorial content for this module covered a variety of graphical topics, but my main extensions from it were:
+Since I was on the MCOMP course, for the first 4 weeks of the module, I also had a non-games module to study, meaning my contributions in the first half were lower than I would have liked.
 
-<h2>Deferred Rendering</h2>
-Deferred rendering was covered in the tutorials, but not in full: the tutorial was not able to render unlit fragments (such as the skybox, a vital part of the scene) or transparent fragments. I therefore had to do extra work to figure out how to get these to work. For unlit fragments, I noticed that in the first render pass that draws all objects in the scene, the alpha channel of the normal texture is not used. I repurposed this channel to hold whether a fragment should be lit or not. Then, in the shader which combines the diffuse pass and the lighting pass, I sample this value and store it in the isLit variable, and since it is always either 0 or 1, I can multiply my lighting calculations by it to turn them on or off on a per fragment basis.
-```glsl
-	fragColour.xyz = diffuse * 0.1 * isLit + diffuse * (1-isLit);
-	fragColour.xyz += diffuse * light * isLit;
-```
-<h6>By multiplying by either isLit or (1-isLit), we can alter how unlit objects are rendered.</h6>
+<h1>Physics changes</h1>
 
-For transparent objects, I simply do not render them in the first pass or the lighting pass, and instead render them afterwards. This does however mean that transparent objects cannot be lit or affected by lighting, which is a flaw in my renderer, but I did not have time to research solutions to this issue, and it is not really noticable in my scene as the only transparent object is the water.
+<h1>Animation System</h1>
 
-![image](\assets\deferred.gif)
-<h6>Multiple light sources and working skybox with deferred rendering.</h6>
+<h1>What went well</h1>
 
-<h2>Particle system</h2>
-Particle systems were not covered in the tutorials, so I decided to find out some ways to implement them. I found <a href="http://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/particles-instancing/">this tutorial</a> and followed the implementation, making some changes along the way. For example, I removed some of the fields for the particle struct, as I did not care about the weight and size of the particles for the purpose of my project. I also initially decided to allow for animated particles, storing the current frame of animation the particle was on, but I decided against this due to the time constraints. My particle system uses GPU instancing, so that all particles can be rendered with a single OpenGL draw call. As such, there was very little performance impact, even with a large amount of particles.
+<h1>Code Rework & Game Flow</h1>
 
-<h2>Sprite Animation</h2>
-For the coursework, I wanted a way to render 2D sprites that face the camera. I created a vertex shader which manipulates the model-view matrix to eliminate any rotations, such that the quad is always facing the camera.
-```glsl
-	vec3 modelScale = vec3(modelMatrix[0][0],modelMatrix[1][1],modelMatrix[2][2]);
-	mat4 newModel = modelMatrix;
-	newModel[0][0] = modelScale.x;
-	newModel[0][1] = 0.0;
-	newModel[0][2] = 0.0;
+<h1>Level Select</h1>
 
-	newModel[1][0] = 0.0;
-	newModel[1][1] = modelScale.y;
-	newModel[1][2] = 0.0;
+<h1>Moving platforms</h1>
 
-	newModel[2][0] = 0.0;
-	newModel[2][1] = 0.0;
-	newModel[2][2] = modelScale.z;
 
-	mat4 modelView = viewMatrix * newModel;
-	modelView[0][0] = modelScale.x;
-	modelView[0][1] = 0.0;
-	modelView[0][2] = 0.0;
-	
-	modelView[1][0] = 0.0;
-	modelView[1][1] = modelScale.y;
-	modelView[1][2] = 0.0;
+<h1>Unity Tools</h1>
+For the project, we decided to use the Unity editor as a level creation tool: we build the level in Unity, placing blocks and objects, then export the level to JSON which will be read by the C++ game.
+I was not responsible for the initial creation of the JSON exporter code, as this was mostly done by Idhant (LINK HERE). I did however expand upon it, adding extra types of game objects and level information, such as moving platforms and medal values specific to each level.
+When adding moving platforms in the editor and setting their values, it was hard to imagine how the platform would actually move in the game. I therefore decided to add a visualiser tool to the editor which would show how the platform will move, so the user can tweak and adjust the platforms without having to export the level and load it into the game.
 
-	modelView[2][0] = 0.0;
-	modelView[2][1] = 0.0;
-	modelView[2][2] = modelScale.z;
-	mat4 mvp = projMatrix * modelView;
-```
-<h6>Shader code, eliminating rotation to enable billboarding.</h6> 
+To do this, I utilised Unity's editor gizmo tools to draw the mesh of the object in a transparent form, that will move as it would in the game:
 
-Animation of the sprites takes place in the fragment shader, where a texture holding the spritesheet is sampled based on the current frame of animation. My animator relies on the spritesheet being laid out horizontally and the sprites of equal dimensions, such that by passing the current frame, number of frames and the dimensions of the image, the correct pixels for that frame can be sampled.
-![image](\assets\fireSpritesheet.png)
-<h6>A fire spritesheet used in the project.</h6>
+INSERT IMAGE
 
-I was very happy with this, as it worked exactly how I invisioned, and I did't even need any help from online resources.
+The code to move the platform over time in Unity is the exact same as the C++ code, albeit with some language function translations. The platform visualisations therefore behave exactly as they would in the actual game.
 
-<h2>Extra Shaders</h2>
-For the project, I created a few of my own shaders, each with specific purpose. One of my shaders uses a new buffer I created, which I called the "glow" buffer. This buffer is rendered to at the same time as the first diffuse pass, but when combining the diffuse and lighting buffers, the glow buffer is not affected by lighting. This allowed me to create "fake" lighting without using lights. For example, my terrain appears to be lit up by the green water of the planet, but this is actually done using the glow buffer, which is filled based on the distance to water. 
-![image](\assets\greenWater.png)
-<h6>The terrain appears to be lit by the water, but no lighting calculations are done for this effect.</h6>
-A downside to my approach is that since this effect isn't real lighting, it does not take into account the normal map of the terrain. Given more time, I think I could have changed this to make the affect more convincing.
 
-Another shader I created was a post-processing shader, which fades the screen to a green colour as the camera enters the clouds. This is done by using the world position of the camera, and fading to green the higher the camera is, until it transitions to the space scene.
-![image](\assets\planetGif.gif)
-<h6>Transitioning from planet to space smoothly.</h6>
-
-I also created a simple vertex shader to raise and lower the water over time, using sin(time).
 
 
 <h1>What went well</h1>
-For my first exposure to OpenGL, I think I created a relatively visually cohesive scene. I am pleased with the amount of extra features I managed to add to the project, especially as I created the sprite animation from scratch using my own intuition. I am also glad that the project ran at a good framerate, without any stuttering of frame drops.
 
-I enjoyed writing shaders, and it was cool to know that my code was being executed on the GPU instead of the CPU: before this project, I had never done any GPU programming. I have gained more experience in shaders since this coursework (see my other projects).
+
 <h1>What I would improve</h1>
-My main flaw with the coursework, and the only area in which I think I dropped marks, was my lack of shadow mapping in the scene. This was covered in the tutorial content, which I completed and implemented in a tutorial scene, but did not get around to adding it to my coursework scene. If I had a day or two more, I think I could have achieved this.
-Additionally, my code overall was slightly messy and could definitely be more readable. In particular, my function for setting up all the objects in the scene is very long, and it would have been better to use a data driven approach where objects were loaded from files instead of explicitly in code.
+
 
 <h1>Code Samples</h1>
 
-<h3>This is the code used to draw my animated 2D sprites, by passing the number of frames of animation adn the current frame into the shader.</h3>
-```cpp
-void DrawAnimatedNode(SceneNode* n){
-	SceneNode2DAnim* nAnim = (SceneNode2DAnim*)n;
-	BindShader(animation2DShader);
-	Matrix4 nWorld = n->GetWorldTransform();
-
-	//remove the effect of any parents on the scale component, as we want the sprite to billboard anyway
-	nWorld.values[0] = 1.0f;
-	nWorld.values[5] = 1.0f;
-	nWorld.values[10] = 1.0f;
-
-	modelMatrix =  nWorld * Matrix4::Scale(n->GetModelScale());
-	UpdateShaderMatrices();
-	GLuint shaderProgram = animation2DShader->GetProgram();
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, nAnim->GetSpriteSheet());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glUniform1i(glGetUniformLocation(shaderProgram, "diffuseTex"), 0);
-	glUniform1i(glGetUniformLocation(shaderProgram, "currentSprite"), nAnim->GetCurrentSprite());
-	glUniform1i(glGetUniformLocation(shaderProgram, "numOfSprites"), nAnim->GetNumberOfSprites());
-	glUniform4fv(glGetUniformLocation(shaderProgram, "nodeColour"), 1, (float*)&n->GetColour());
-
-	nAnim->Draw(*this);
-}
-```
-
-<h3>This is the fragment shader that then performs the animation, by calculating where in the sprite sheet the current sprite starts.</h3>
-```glsl
-#version 330 core
-uniform sampler2D diffuseTex;
-uniform int currentSprite;
-uniform int numOfSprites;
-
-in Vertex{
-	vec2 texCoord;
-	vec4 colour;
-} IN;
-
-out vec4 fragColour[3];
-
-void main(void)	{
-	float div = 1.0/numOfSprites;
-	vec2 newCoord = vec2(div*currentSprite + div*IN.texCoord.x,(1-IN.texCoord.y));
-	fragColour[0] = texture(diffuseTex, newCoord) * IN.colour;
-	fragColour[1].a = 0.0; //tells the combine shader that this is unlit
-}
-```
-
-<h3>When rendering either my space or planet scene, swapping scenes is done by changing the node graph, starting at a different root.</h3>
-```cpp
-void Renderer::SwapToSpaceScene() {
-	currentScene = 1;
-	ClearNodeLists();
-	camera->SetIsFixed(true);
-	SetCameraTrackSpace();
-	BuildNodeLists(spaceRoot);
-}
-
-void Renderer::SwapToPlanetScene() {
-	currentScene = 0;
-
-	ClearNodeLists();
-	camera->SetIsFixed(true);
-	SetCameraTrackPlanet();
-	BuildNodeLists(planetRoot);
-}
-```
-<h3>Since my project used deferred rendering, this was the rendering order I used:</h3>
-```cpp
-void Renderer::RenderScene() {
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	BuildNodeLists(currentScene==0?planetRoot:spaceRoot);
-	SortNodeLists();
-	FillBuffers(currentScene);
-	DrawPointLights(currentScene);
-	CombineBuffers();
-	glEnable(GL_BLEND);
-	DrawTransparentNodes(); //draw transparent nodes after lighting is performed.
-	DrawParticleSystems();
-	glDisable(GL_BLEND);
-	RunPostProcessing();
-	ClearNodeLists();
-}
-```
-
-<h3>To abstract the rendering away from my game objects slightly, I created a material class to define what shaders and textures an object should use when it is rendered, and if it should be lit.</h3>
-```cpp
-class Material
-{
-public:
-	Material(Shader* shdr, char* diffuse, char* bump, bool lit);
-	~Material();
-
-	Shader* GetShader() { return shader; }
-	void SetShader(Shader* s) { shader = s; }
-
-	GLuint GetDiffuse() { return diffuseTexture; }
-	void SetDiffuse(GLuint d) { diffuseTexture = d; }
-
-	char* GetDiffusePath() { return diffuseTexturePath; }
-	void SetDiffusePath(char* p) { diffuseTexturePath = p; }
-
-	GLuint GetBump() { return bumpTexture; }
-	void SetBump(GLuint b) { bumpTexture = b; }
-
-	char* GetBumpPath() { return bumpTexturePath; }
-	void SetBumpPath(char* p) { bumpTexturePath = p; }
-
-	bool GetIsLit() { return isLit; }
-	void SetIsLit(bool l) { isLit = l; }
-
-	void LoadShaderTextures();
-	void BindShaderTextures();
-
-protected:
-	Shader* shader;
-
-	bool isLit;
-
-	GLuint diffuseTexture;
-	char* diffuseTexturePath;
-
-	GLuint bumpTexture;
-	char* bumpTexturePath;
-};
-```
-
-```cpp
-
-Material::Material(Shader* shdr, char* diffuse, char* bump, bool lit) {
-	shader = shdr;
-	diffuseTexturePath = diffuse;
-	bumpTexturePath = bump;
-	isLit = lit;
-	LoadShaderTextures();
-}
-
-Material::~Material() {
-	glDeleteTextures(1, &diffuseTexture);
-	glDeleteTextures(1, &bumpTexture);
-}
-
-void Material::LoadShaderTextures() {
-	if(diffuseTexturePath)diffuseTexture = SOIL_load_OGL_texture(diffuseTexturePath, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
-	if(bumpTexturePath)bumpTexture = SOIL_load_OGL_texture(bumpTexturePath, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
-}
-
-void Material::BindShaderTextures() {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	//glBindTexture(GL_TEXTURE_2D, 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, bumpTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	//glBindTexture(GL_TEXTURE_2D, 0);
-}
-```
-
-<h3>This is the shader used to make the terrain look like it is glowing. The glow colour is stored in fragColour[2].</h3>
-```glsl
-#version 330 core
-
-uniform sampler2D diffuseTex;
-uniform sampler2D bumpTex;
-uniform bool isLit;
-uniform float maxGlowHeight;
-uniform float glowRange;
-
-in Vertex{
-	vec4 colour;
-	vec2 texCoord;
-	vec3 normal;
-	vec3 tangent;
-	vec3 binormal;
-	vec3 worldPos;
-} IN;
-
-out vec4 fragColour[3];
-
-void main(void)	{
-	mat3 TBN = mat3(normalize(IN.tangent), normalize(IN.binormal), normalize(IN.normal));
-
-	vec3 bumpNormal = texture2D(bumpTex, IN.texCoord).rgb * 2.0 - 1.0;
-	bumpNormal = normalize(TBN * normalize(bumpNormal));
-
-	fragColour[0] = texture2D(diffuseTex, IN.texCoord) * IN.colour;
-	fragColour[1] = vec4(bumpNormal.xyz * 0.5 + 0.5, 1.0);
-	fragColour[1].a = isLit?1.0:0.0;
-
-	vec3 GREEN = vec3(0,1,0);
-
-	fragColour[2].rgb = fragColour[0].rbg * GREEN * max(((maxGlowHeight-IN.worldPos.y)/glowRange),0);
-
-	fragColour[2].a = 1.0;
-}
-```
-
-<h2>Full code can be found at <a href = "https://github.com/HeavyMetalGameDev/CSC8502GraphicsTutorials"> this GitHub page.</a></h2>
