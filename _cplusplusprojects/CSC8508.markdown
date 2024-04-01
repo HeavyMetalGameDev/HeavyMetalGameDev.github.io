@@ -28,18 +28,41 @@ And more minor changes and tweaks.
 
 Since I was on the MCOMP course, for the first 4 weeks of the module, I also had a non-games module to study, meaning my contributions in the first half were lower than I would have liked.
 
+<h1>Component System</h1>
+The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the last coursework, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
+
 <h1>Physics changes</h1>
+I made a few simple changes to the physics system to allow for more control: physics materials and collision layers. Collision layers were especially important as they had a large impact on speeding up the performance of the game: in the broad phase of the collision detection, we can ignore pairs of objects where their layers have been set to not collide.
+
+I also made a major change to the physics: changing the broadphase algorithm from quadtrees to instead use Sort and Sweep. My main reasoning for this was that Sort and Sweep was more appropriate to out game: although it was a 3D game, the gameplay primarily takes place in one dimension, as the game involves running from one end of the level to the other. Because of the single dimensionality of the game world, quadtrees (which operate across multiple dimensions) were not necessary.
+
+To implement sort and sweep, I added some new values to my game objects: a lower X bound and an upper X bound. The X dimension was chosen as this was the dimension our levels progressed in.
+I created a struct to represent a bound, and a vector to store two of these bounds for each object:
+
+//insert code for bounds here
+
+When coding the "Sort" portion of Sort & Sweep, the most common sorting algorithm used is insertion sort, as it is especially effected on groups of data that are almost sorted. Since not much changes from frame to frame in a game, we can guarantee that from one frame to the next, the bounds will almost be in the correct order.
 
 <h1>Animation System</h1>
+Another major contribution to the project was the animation code. I implemented all of the code pertaining to animations, including playing animations, transitioning animations and networking the animations across players.
+The code to render the animations was mainly taken from the OpenGL tutorial material in CSC8502, with some modifications. Firstly, I modified it to interpolate frames of animation. It does this my passing in the joint data for both the current frame of animation and the next frame of animation, along with a float value between 0 and 1 which represents the progress to the next frame. From these values, we can interpolate the animation frames and get smooth animation that does not jump from frame to frame.
 
 <h1>What went well</h1>
 
 <h1>Code Rework & Game Flow</h1>
 
 <h1>Level Select</h1>
+When we decided our game was going to be level based, a feature I really wanted to add was a level select, so the players can choose what level they want to play in multiplayer. After reworking the level loading (previous section), I had functions set up to change the level from the client to server, but UI to do so. As such, I investigated Joe's (link) UI system he had created integrating LUA, and found it relatively easy to understand, such that I felt confident in attempting my level select.
 
 <h1>Moving platforms</h1>
+The game's levels felt very static, as there was not many moving parts to the levels. I decided to add moving platforms and spikes to the game.
+For this, I made a general component to move objects between two points over time, which was coded such that both moving platforms and spikes use the exact same component.
 
+<h2>Riding platforms</h2>
+
+<h2>Grappling platforms</h2>
+A big flaw in the game to this point was that the grappling hook could not attach to moving objects: once the grapple point had been set, it would not change. This was not acceptable when I added platforms, as it felt very unsatisfying to grapple a moving platform, only for the hook to remain still.
+I decided to fix this my altering the grappling hook itsself instead of the moving platforms. The hook will now update the point to apply force towards whenever the object that was grappled changes position.
 
 <h1>Unity Tools</h1>
 For the project, we decided to use the Unity editor as a level creation tool: we build the level in Unity, placing blocks and objects, then export the level to JSON which will be read by the C++ game.
