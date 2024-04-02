@@ -8,10 +8,11 @@ shortdescription: C++ 8 week team project.
 permalink: /CSC8508
 priority: 1
 ---
-<h2>Grade: TBD/h2>
+<h2>Grade: TBD</h2>
+This page is in progress.
 <h1>Summary</h1>
 CSC8508 was my team project module, to create a game in C++ in 8 weeks.
-My main contributions to the project were:
+My main contributions to the project were: 
 - Simple component system (created in my previous coursework, CSC8503)
 - Physics broadphase rework using Sort & Sweep.
 - Extra physics system features such as collision layers and physics materials.
@@ -24,9 +25,9 @@ My main contributions to the project were:
 - Gameplay changes involving moving platforms and tweaks to movement including coyote time.
 - Networking various features such as player's speed lines.
 - Different textures per player so each player has a different look.
-And more minor changes and tweaks.
+- And more minor changes and tweaks.
 
-Since I was on the MCOMP course, for the first 4 weeks of the module, I also had a non-games module to study, meaning my contributions in the first half were lower than I would have liked.
+Since I was on the MComp course, for the first 4 weeks of the module, I also had a non-games module to study, meaning my contributions in the first half were lower than I would have liked.
 
 <h1>Component System</h1>
 The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the last coursework, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
@@ -39,15 +40,77 @@ I also made a major change to the physics: changing the broadphase algorithm fro
 To implement sort and sweep, I added some new values to my game objects: a lower X bound and an upper X bound. The X dimension was chosen as this was the dimension our levels progressed in.
 I created a struct to represent a bound, and a vector to store two of these bounds for each object:
 
-//insert code for bounds here
+```cpp
+struct SortAndSweepBound {
+    float* xPos;
+    bool isUpper;
+    GameObject* gameObject;
+
+    bool operator<(SortAndSweepBound const& other) const {
+        return *xPos < *(other.xPos);
+    }
+};
+
+class PhysicsSystem{
+    ...
+    std::vector<SortAndSweepBound> sortAndSweepData;
+    ...
+}
+```
+<h6>Struct used in sort and sweep.</h6>
+
+The reason I use a float pointer is so that a GameObject can update its upper and lower bounds as it moves in the world, and these changes can be reflected in the SortAndSweepBound without having to manually update it. We need a bool to determine if the bound is upper or lower, and we need a reference to the GameObject it is a bound for so we can then generate collision pairs when we run the "Sweep" phase.
+I override the < operator so the struct can easily be used with an insertion sort. 
 
 When coding the "Sort" portion of Sort & Sweep, the most common sorting algorithm used is insertion sort, as it is especially effected on groups of data that are almost sorted. Since not much changes from frame to frame in a game, we can guarantee that from one frame to the next, the bounds will almost be in the correct order.
+
+```cpp
+void PhysicsSystem::SortAndSweep() {
+    broadphaseCollisions.clear();
+
+    SortAndSweepInsertionSort();
+    std::set<GameObject*> currentValidObjects;
+    for (int i = 0; i < sortAndSweepData.size(); i++) {
+        SortAndSweepBound currentBound = sortAndSweepData[i];
+        GameObject* currentBoundObject = currentBound.gameObject;
+        if (!currentBound.isUpper) {
+            for (GameObject* other : currentValidObjects) {
+                if (!layerMatrix[other->GetPhysicsObject()->GetLayer() | currentBoundObject->GetPhysicsObject()->GetLayer()])continue;
+
+                CollisionDetection::CollisionInfo info;
+                info.a = Tmin(currentBoundObject, other);
+                info.b = Tmax(currentBoundObject, other);
+                broadphaseCollisions.insert(info);
+            }
+            currentValidObjects.insert(currentBoundObject);
+        }
+        else {
+            currentValidObjects.erase(currentBoundObject);
+        }
+    }
+}
+```
+<h6> The Sort and Sweep function, which adds collision pairs to broadphaseCollisions.</h6>
+broadphaseCollisions is an std::set, which means that a CollisionInfo of pair <A,B> will be different to <B,A>. This is why we set info.a to be the min and info.B to be the max, so duplicate pairs will be ignored.
+
+After implementing my physics changes I profiled the game, and found that there had been significant speedup.
+
+//insert proof here
 
 <h1>Animation System</h1>
 Another major contribution to the project was the animation code. I implemented all of the code pertaining to animations, including playing animations, transitioning animations and networking the animations across players.
 The code to render the animations was mainly taken from the OpenGL tutorial material in CSC8502, with some modifications. Firstly, I modified it to interpolate frames of animation. It does this my passing in the joint data for both the current frame of animation and the next frame of animation, along with a float value between 0 and 1 which represents the progress to the next frame. From these values, we can interpolate the animation frames and get smooth animation that does not jump from frame to frame.
 
-<h1>What went well</h1>
+<h2>Transitions</h2>
+Next, I wanted to make animations transition, so that when a new one is played it does not immediately snap to the new joint poses. To do this, I reused my interpolation code, but instead of interpolation to the next frame of the same animation, I interpolate between frames from one animation to the next, based on how long the user sets the transition to be. By doing this, joint positions are interpolated between animations and they can be switched much more smoothly.
+
+![image](\assets\hellAnim.gif)
+<h6>Player's animations transition.</h6>
+
+I noticed one problem with this however. Some animation transitions did not look very good, due to drastic differences in joint positions. For example, transitioning directly from the running left animation to the running right animation looked bad. To help alleviate this issue, I added the ability for a transition to use a midpose. This means that a transition can be Animation 1 -> midpose -> Animation 2. By doing this, the swapping of the animation feels more natural. For the project, I had the player's idle animation as the midpose for every transition, but if I had more animations I could have set this on a per animation pair basis.
+
+<h2>Networking Animations</h2>
+The final step of the animation system was to network the animations. The server will handle the changing of animations and detect what animation a player should be in, and send a message to the clients to tell them to change the animation of a specific object. 
 
 <h1>Code Rework & Game Flow</h1>
 
@@ -56,7 +119,36 @@ When we decided our game was going to be level based, a feature I really wanted 
 
 <h1>Moving platforms</h1>
 The game's levels felt very static, as there was not many moving parts to the levels. I decided to add moving platforms and spikes to the game.
-For this, I made a general component to move objects between two points over time, which was coded such that both moving platforms and spikes use the exact same component.
+For this, I made a general component to move objects between two points over time, which was coded such that both moving platforms and spikes use the exact same component:
+
+```cpp
+class ObjectOscillator : public Component {
+    ...
+    private:
+    ...
+    PhysicsObject* phys;
+    Vector3 initPosition;
+
+    Vector3 normalisedDirection;
+    float distance = 1.0f;
+    float waitDelay = 0.0f;
+    float cooldown = 0.0f;
+    bool isReturning = false;
+    float timer = 0.0f;
+    float frequency = 1.0f;
+    State state = RUNNING;
+    ...
+}
+```
+I gave the component 2 extra values for this, a waitDelay and a cooldown. WaitDelay is used to pause the platform halfway through the oscilation (for example, spikes staying up for a few seconds) and cooldown is used at the end of the oscillation (for example, a moving platform staying in place for a few seconds after returning). This allowed me to customise the way the objects moved in further detail.
+To move the objects over time, I used these lines:
+
+```cpp
+float cosTimer = (-1.0f * cos((timer * frequency * TAU)) + 1) * 0.5f; //this gets a value from 0 to 1 where 0 is the initial value 
+gameObject->GetTransform().SetPosition(initPosition + normalisedDirection * cosTimer * distance);
+```
+The first line takes the timer (how long an object has oscilated for) and the frequency, and returns a value between 0 and 1 based on how far away the object should be from its initial position. From there, we use this value to set the position of the object.
+
 
 <h2>Riding platforms</h2>
 
@@ -71,7 +163,8 @@ When adding moving platforms in the editor and setting their values, it was hard
 
 To do this, I utilised Unity's editor gizmo tools to draw the mesh of the object in a transparent form, that will move as it would in the game:
 
-INSERT IMAGE
+![image](\assets\hellTool.gif)
+<h6>Moving platform and spike visualiser in Unity. These both use the same code to move in the game.</h6>
 
 The code to move the platform over time in Unity is the exact same as the C++ code, albeit with some language function translations. The platform visualisations therefore behave exactly as they would in the actual game.
 
@@ -82,7 +175,7 @@ The code to move the platform over time in Unity is the exact same as the C++ co
 
 
 <h1>What I would improve</h1>
-
+My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5.
 
 <h1>Code Samples</h1>
 
