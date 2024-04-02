@@ -2,7 +2,7 @@
 
 layout: project
 title: Hellrunners - CSC8508 Team Project
-thumbnail: \assets\greenbulon.png
+thumbnail: \assets\hellrunners.png
 videolink: TBA
 shortdescription: C++ 8 week team project.
 permalink: /CSC8508
