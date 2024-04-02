@@ -111,8 +111,121 @@ I noticed one problem with this however. Some animation transitions did not look
 
 <h2>Networking Animations</h2>
 The final step of the animation system was to network the animations. The server will handle the changing of animations and detect what animation a player should be in, and send a message to the clients to tell them to change the animation of a specific object. 
+I did not create the underlying networking system, as that was Joe's (LINK) work. I did however utilise it by adding a new remote function call from the server to client, Player_Animation_Call:
+
+```cpp
+
+void GameplayState::ReadNetworkFunctions() {
+    //These lines were not created by me
+    while (!networkData->incomingFunctions.IsEmpty()) {
+        FunctionPacket packet = networkData->incomingFunctions.Pop();
+        DataHandler handler(&packet.data);
+        switch (packet.functionId) {
+            ...
+            //These lines were!
+            case(Replicated::Player_Animation_Call): {
+                Replicated::RemoteAnimationData data = handler.Unpack< Replicated::RemoteAnimationData>();
+                UpdatePlayerAnimation(data.networkID, data.state);
+            }
+            break;
+            ...
+        }
+    }
+}
+...
+void GameplayState::UpdatePlayerAnimation(int networkID, Replicated::PlayerAnimationStates state) {
+    GameObject* playerObject = world->GetObjectByNetworkId(networkID);
+    if (!playerObject)return;
+
+    AnimatorObject* playerAnimator = playerObject->GetAnimatorObject();
+    if (!playerAnimator)return;
+
+    switch (state) {
+        case Replicated::IDLE: {
+            playerAnimator->TransitionAnimation("Idle", 0.1f);
+            break;
+        }
+        case Replicated::JUMP: {
+            playerAnimator->TransitionAnimation("Jump", 0.1f);
+            break;
+        }
+        case Replicated::FALLING: {
+            playerAnimator->TransitionAnimation("Fall", 0.1f);
+            break;
+        }
+        case Replicated::RUNNING_FORWARD: {
+            playerAnimator->TransitionAnimation("Run", 0.1f);
+            break;
+        }
+        case Replicated::RUNNING_BACK: {
+            playerAnimator->TransitionAnimation("RunBack", 0.1f);
+            break;
+        }
+        case Replicated::RUNNING_LEFT: {
+            playerAnimator->TransitionAnimationWithMidPose("LeftStrafe", 0.15f);
+            break;
+        }
+        case Replicated::RUNNING_RIGHT: {
+            playerAnimator->TransitionAnimationWithMidPose("RightStrafe", 0.15f);
+            break;
+        }
+    }
+}
+```
+
+And on the server side:
+
+```cpp
+void RunningState::UpdatePlayerAnimations() {
+    for (std::pair<int,GameObject*> playerObject : playerObjects){
+        PlayerMovement* playerMovement;
+        if (playerObject.second->TryGetComponent<PlayerMovement>(playerMovement)) {
+            PlayerMovement::PlayerAnimationCallData data = playerMovement->GetPlayerAnimationCallData();
+            if (data.isGrappling || (data.inAir && !data.isFalling)) {
+                SetPlayerAnimation(Replicated::JUMP, playerObject.second);
+                continue;
+            }
+            if (data.inAir) {
+                SetPlayerAnimation(Replicated::FALLING, playerObject.second);
+                continue;
+            }
+            if (!data.hasInput) {
+                SetPlayerAnimation(Replicated::IDLE, playerObject.second);
+                continue;
+            }
+            if (data.backwards) {
+                SetPlayerAnimation(Replicated::RUNNING_BACK, playerObject.second);
+                continue;
+            }
+            if (data.strafe ==0) {
+                SetPlayerAnimation(Replicated::RUNNING_FORWARD, playerObject.second);
+                continue;
+            }
+            if (data.strafe > 0) {
+                SetPlayerAnimation(Replicated::RUNNING_RIGHT, playerObject.second);
+                continue;
+            }
+            else {
+                SetPlayerAnimation(Replicated::RUNNING_LEFT, playerObject.second);
+                continue;
+            }
+        }
+    }
+}
+...
+void RunningState::SetPlayerAnimation(Replicated::PlayerAnimationStates state, GameObject* object) {
+    int id = object->GetNetworkObject()->GetNetworkId();
+    if (playerAnimationInfo[id] == state)return; //already in that animation!
+    playerAnimationInfo[id] = state;
+    SendPlayerAnimationCall(state, object);
+}
+```
+
+This system is limited in that it may get complicated with many more extra animations. I decided to it this way however as it lets me decide how to transition each animation, and for how long. I also knew that the number of animations in the game would be quite small (especially since I chose all of them!) so this system was sufficient.
+In the game, the system worked exactly as I intended it to and helped the other players in the game feel much more real. Overall the animations looked appropriate, and since the game was so fat paced, foot sliding was not really an issue, so I did not need to tweak with the animation speeds much.
 
 <h1>Code Rework & Game Flow</h1>
+ANother significant and important task I undertook was handling changes in level. Until I began work on this, all of the code in the project was coded in such a way that a lot of it would only work for the first level, and would break when moving to a new level. For example, the code to load level objects was inside GameplayState's OnEnter function (which is called when we move from the main menu to the gameplay). We do not transition out of this state when changing levels, so the next level would never be loaded.
 
 <h1>Level Select</h1>
 When we decided our game was going to be level based, a feature I really wanted to add was a level select, so the players can choose what level they want to play in multiplayer. After reworking the level loading (previous section), I had functions set up to change the level from the client to server, but UI to do so. As such, I investigated Joe's (link) UI system he had created integrating LUA, and found it relatively easy to understand, such that I felt confident in attempting my level select.
