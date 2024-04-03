@@ -6,7 +6,7 @@ thumbnail: \assets\goose.png
 videolink: https://www.youtube.com/watch?v=Fu-9MW1snvs
 shortdescription: Physics, AI and Networking project created using C++.
 permalink: /CSC8503
-priority: 2
+priority: 3
 ---
 <h2>Grade: 100%</h2>
 <h1>Summary</h1> 

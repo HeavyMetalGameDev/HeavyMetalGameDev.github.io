@@ -32,6 +32,10 @@ Since I was on the MComp course, for the first 4 weeks of the module, I also had
 <h1>Component System</h1>
 The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the last coursework, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
 
+<h1>Deferred Rendering</h1>
+For the implementation of the deferred rendering, I did not want to affect the look of the game too much, just allow for more lights in the scene. I therefore decided to take a hybrid approach to rendering: I left the standard forward lighting pass in the game for the directional light, and added extra passes afterwards for the deferred lights. By doing this
+
+
 <h1>Physics changes</h1>
 I made a few simple changes to the physics system to allow for more control: physics materials and collision layers. Collision layers were especially important as they had a large impact on speeding up the performance of the game: in the broad phase of the collision detection, we can ignore pairs of objects where their layers have been set to not collide.
 
@@ -95,11 +99,21 @@ broadphaseCollisions is an std::set, which means that a CollisionInfo of pair <A
 
 After implementing my physics changes I profiled the game, and found that there had been significant speedup.
 
-//insert proof here
+Adding layers provided major performance boosts on all types of level. On small levels, Sort & Sweep did not offer much performance impact over using no broadphase, shown by the update times of the physics system:
+
+![image](\assets\hellPhysSmall.png)
+<h6>Physics update times on "Codename SF" level.</h6>
+
+However, on larger levels, the difference between no broadphase and Sort & Sweep was much more apparent:
+
+![image](\assets\hellPhysLarge.png)
+<h6>Physics update times on a large level.</h6>
+
+I am therefore quite happy with the performance of my Sort & Sweep implementation.
 
 <h1>Animation System</h1>
 Another major contribution to the project was the animation code. I implemented all of the code pertaining to animations, including playing animations, transitioning animations and networking the animations across players.
-The code to render the animations was mainly taken from the OpenGL tutorial material in CSC8502, with some modifications. Firstly, I modified it to interpolate frames of animation. It does this my passing in the joint data for both the current frame of animation and the next frame of animation, along with a float value between 0 and 1 which represents the progress to the next frame. From these values, we can interpolate the animation frames and get smooth animation that does not jump from frame to frame.
+The code to render the animations was mainly taken from the OpenGL tutorial material in CSC8502, with some modifications. Firstly, I modified it to interpolate frames of animation. It does this my passing in the joint data for both the current frame of animation and the next frame of animation, along with a float value between 0 and 1 which represents the progress to the next frame, into the vertex shader. From these values, we can interpolate the animation frames and get smooth animation that does not jump from frame to frame.
 
 <h2>Transitions</h2>
 Next, I wanted to make animations transition, so that when a new one is played it does not immediately snap to the new joint poses. To do this, I reused my interpolation code, but instead of interpolation to the next frame of the same animation, I interpolate between frames from one animation to the next, based on how long the user sets the transition to be. By doing this, joint positions are interpolated between animations and they can be switched much more smoothly.
@@ -222,10 +236,19 @@ void RunningState::SetPlayerAnimation(Replicated::PlayerAnimationStates state, G
 ```
 
 This system is limited in that it may get complicated with many more extra animations. I decided to it this way however as it lets me decide how to transition each animation, and for how long. I also knew that the number of animations in the game would be quite small (especially since I chose all of them!) so this system was sufficient.
-In the game, the system worked exactly as I intended it to and helped the other players in the game feel much more real. Overall the animations looked appropriate, and since the game was so fat paced, foot sliding was not really an issue, so I did not need to tweak with the animation speeds much.
+In the game, the system worked exactly as I intended it to and helped the other players in the game feel much more real. Overall the animations looked appropriate, and since the game was so fast paced, foot sliding was not really an issue, so I did not need to tweak with the animation speeds much.
 
 <h1>Code Rework & Game Flow</h1>
-ANother significant and important task I undertook was handling changes in level. Until I began work on this, all of the code in the project was coded in such a way that a lot of it would only work for the first level, and would break when moving to a new level. For example, the code to load level objects was inside GameplayState's OnEnter function (which is called when we move from the main menu to the gameplay). We do not transition out of this state when changing levels, so the next level would never be loaded.
+Another significant and important task I undertook was handling changes in level. Until I began work on this, all of the code in the project was coded in such a way that a lot of it would only work for the first level, and would break when moving to a new level. For example, the code to load level objects was inside GameplayState's OnEnter function (which is called when we move from the main menu to the gameplay). We do not transition out of this state when changing levels, so the next level would never be loaded. There were many member variables for classes that were set only when entering the gameplay state.
+
+When deciding how levels transition, I had 2 major choices: do we clear the game world, deleting all objects and then creating new ones for the next level, or do we reuse the objects that we have and change their values, so we do not have to make new ones? I decided to go with the first option, as it was the simpler, albeit less optimal, approach. Using a pooling system for level objects would have been superior, but this would have taken more development time and I didn't want to risk such an important feature being unfinished.
+
+For level transitions, it was important to establish a new game flow, so that the game starts when all clients have loaded. The new flow looks like this:
+![image](\assets\hellDiagram.png)
+<h6>Simplified Flow diagram of the gameplay.</h6>
+
+
+In addition to this,
 
 <h1>Level Select</h1>
 When we decided our game was going to be level based, a feature I really wanted to add was a level select, so the players can choose what level they want to play in multiplayer. After reworking the level loading (previous section), I had functions set up to change the level from the client to server, but UI to do so. As such, I investigated Joe's (link) UI system he had created integrating LUA, and found it relatively easy to understand, such that I felt confident in attempting my level select.
@@ -285,10 +308,15 @@ The code to move the platform over time in Unity is the exact same as the C++ co
 
 
 <h1>What went well</h1>
+I am quite happy with the final result overall, as it was more polished than I was expecting, and it was also genuinely fun to play in multiplayer, even though the gameplay was simplistic. Since we kept the scope of the game low throught the project, we managed to hit nearly all our feature targets.
 
+I am especially happy that I managed to add in the level select.
+One of the most satisfying moments in the project was the animation system's networking.
 
 <h1>What I would improve</h1>
-My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5.
+My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5. Making the game work on the PS5 would have taken a long time.
+
+Some parts of the game were not fully complete and functional: the player's were supposed to play a victory animation once reaching the end, but this had a bug and did not always play. I unfortunately did not have enough time to fix this bug.
 
 <h1>Code Samples</h1>
 
