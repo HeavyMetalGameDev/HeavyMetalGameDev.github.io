@@ -3,7 +3,7 @@
 layout: project
 title: The Everymovie (NUCATS Game Jam 2023)
 thumbnail: \assets\everymovie.png
-videolink: youtube.com
+videolink: https://www.youtube.com/watch?v=ctd_rHOdPSU
 shortdescription: Minigame-based Game Jam created in 2 weeks in Unity.
 permalink: /Everymovie
 priority: 3
