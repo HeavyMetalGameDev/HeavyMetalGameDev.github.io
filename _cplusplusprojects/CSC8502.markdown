@@ -6,7 +6,7 @@ thumbnail: \assets\greenbulon.png
 videolink: https://www.youtube.com/watch?v=92fHMh4TBgQ
 shortdescription: Graphical project created using C++ and OpenGL.
 permalink: /CSC8502
-priority: 1
+priority: 2
 ---
 <h2>Grade: 95%</h2>
 <h1>Summary</h1>
