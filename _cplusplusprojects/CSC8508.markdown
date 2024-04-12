@@ -310,11 +310,11 @@ The code to move the platform over time in Unity is the exact same as the C++ co
 <h1>What went well</h1>
 I am quite happy with the final result overall, as it was more polished than I was expecting, and it was also genuinely fun to play in multiplayer, even though the gameplay was simplistic. Since we kept the scope of the game low throught the project, we managed to hit nearly all our feature targets.
 
-I am especially happy that I managed to add in the level select.
+I am especially happy that I managed to add in the level select, and that it behaved as you would expect.
 One of the most satisfying moments in the project was the animation system's networking.
 
 <h1>What I would improve</h1>
 My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5. Making the game work on the PS5 would have taken a long time.
 
-Some parts of the game were not fully complete and functional: the player's were supposed to play a victory animation once reaching the end, but this had a bug and did not always play. I unfortunately did not have enough time to fix this bug.
+Some parts of the game were not fully complete and functional: the player's were supposed to play a victory animation once reaching the end, but this had a bug and did not always play. I unfortunately did not have enough time to fix this bug. I added functionality to the menu exit button, but this did not get PRd in time for the final submission (!). Additionally, the menu funcionality could have been smoother, as once you had entered gameplay, there was no way to return to the menu without closing and reopening the game.
 
