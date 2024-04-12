@@ -33,7 +33,7 @@ Since I was on the MComp course, for the first 4 weeks of the module, I also had
 The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the last coursework, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
 
 <h1>Deferred Rendering</h1>
-For the implementation of the deferred rendering, I did not want to affect the look of the game too much, just allow for more lights in the scene. I therefore decided to take a hybrid approach to rendering: I left the standard forward lighting pass in the game for the directional light, and added extra passes afterwards for the deferred lights. By doing this
+For the implementation of the deferred rendering, I did not want to affect the look of the game too much, just allow for more lights in the scene. I therefore decided to take a hybrid approach to rendering: I left the standard forward lighting pass in the game for the directional light, and added extra passes afterwards for the deferred lights. By doing this, the game looked the same as it did before, but with the ability to add more lights to levels, if we needed them.
 
 
 <h1>Physics changes</h1>
@@ -248,10 +248,10 @@ For level transitions, it was important to establish a new game flow, so that th
 <h6>Simplified Flow diagram of the gameplay.</h6>
 
 
-In addition to this,
-
 <h1>Level Select</h1>
 When we decided our game was going to be level based, a feature I really wanted to add was a level select, so the players can choose what level they want to play in multiplayer. After reworking the level loading (previous section), I had functions set up to change the level from the client to server, but UI to do so. As such, I investigated Joe's (link) UI system he had created integrating LUA, and found it relatively easy to understand, such that I felt confident in attempting my level select.
+
+When imagining the level select, I had two ideas in mind for the UI: A thumbnail image showing the level, and the name of the level above it.
 
 <h1>Moving platforms</h1>
 The game's levels felt very static, as there was not many moving parts to the levels. I decided to add moving platforms and spikes to the game.
@@ -317,6 +317,4 @@ One of the most satisfying moments in the project was the animation system's net
 My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5. Making the game work on the PS5 would have taken a long time.
 
 Some parts of the game were not fully complete and functional: the player's were supposed to play a victory animation once reaching the end, but this had a bug and did not always play. I unfortunately did not have enough time to fix this bug.
-
-<h1>Code Samples</h1>
 
