@@ -8,7 +8,7 @@ shortdescription: C++ 8 week team project.
 permalink: /CSC8508
 priority: 1
 ---
-<h2>Team Mark: 80%      Individual Mark: 88%</h2>
+<h2>Team Mark: 82%      Individual Mark: 88%</h2>
 <h1>Summary</h1>
 CSC8508 was my team project module, to create a game in C++ in 8 weeks.
 My main contributions to the project were: 
