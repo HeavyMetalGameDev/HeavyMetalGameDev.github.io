@@ -330,7 +330,7 @@ I decided to fix this my altering the grappling hook itsself instead of the movi
 
 <h1>Unity Tools</h1>
 For the project, we decided to use the Unity editor as a level creation tool: we build the level in Unity, placing blocks and objects, then export the level to JSON which will be read by the C++ game.
-I was not responsible for the initial creation of the JSON exporter code, as this was mostly done by Idhant (LINK HERE). I did however expand upon it, adding extra types of game objects and level information, such as moving platforms and medal values specific to each level.
+I was not responsible for the initial creation of the JSON exporter code, as this was mostly done by <a href = "https://starmandev.netlify.app/"> Idhant (click for link)</a>. I did however expand upon it, adding extra types of game objects and level information, such as moving platforms and medal values specific to each level.
 When adding moving platforms in the editor and setting their values, it was hard to imagine how the platform would actually move in the game. I therefore decided to add a visualiser tool to the editor which would show how the platform will move, so the user can tweak and adjust the platforms without having to export the level and load it into the game.
 
 To do this, I utilised Unity's editor gizmo tools to draw the mesh of the object in a transparent form, that will move as it would in the game:
