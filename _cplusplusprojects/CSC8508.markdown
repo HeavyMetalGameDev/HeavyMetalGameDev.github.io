@@ -33,13 +33,15 @@ Since I was on the MComp course, for the first 4 weeks of the module, I also had
 The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the last coursework, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
 
 <h1>Deferred Rendering</h1>
-For the implementation of the deferred rendering, I did not want to affect the look of the game too much, just allow for more lights in the scene. I therefore decided to take a hybrid approach to rendering: I left the standard forward lighting pass in the game for the directional light, and added extra passes afterwards for the deferred lights. By doing this, the game looked the same as it did before, but with the ability to add more lights to levels, if we needed them.
 
+For the implementation of the deferred rendering, I did not want to affect the look of the game too much, just allow for more lights in the scene. I therefore decided to take a hybrid approach to rendering: I left the standard forward lighting pass in the game for the directional light, and added extra passes afterwards for the deferred lights. By doing this, the game looked exactly the same as it did before (since the only light was the directional light), but it now supported adding extra deferred lights.
+
+Since there were very few lights in most levels, the performance impact of this was minimal.
 
 <h1>Physics changes</h1>
 I made a few simple changes to the physics system to allow for more control: physics materials and collision layers. Collision layers were especially important as they had a large impact on speeding up the performance of the game: in the broad phase of the collision detection, we can ignore pairs of objects where their layers have been set to not collide.
 
-I also made a major change to the physics: changing the broadphase algorithm from quadtrees to instead use Sort and Sweep. My main reasoning for this was that Sort and Sweep was more appropriate to out game: although it was a 3D game, the gameplay primarily takes place in one dimension, as the game involves running from one end of the level to the other. Because of the single dimensionality of the game world, quadtrees (which operate across multiple dimensions) were not necessary.
+I also made a major change to the physics: changing the broadphase algorithm from quadtrees to instead use Sort and Sweep. My main reasoning for this was that Sort and Sweep was more appropriate to our game: although it was a 3D game, the gameplay primarily takes place in one dimension, as the game involves running from one end of the level to the other. Because of the single dimensionality of the game world, quadtrees (which operate across multiple dimensions) were not necessary.
 
 To implement sort and sweep, I added some new values to my game objects: a lower X bound and an upper X bound. The X dimension was chosen as this was the dimension our levels progressed in.
 I created a struct to represent a bound, and a vector to store two of these bounds for each object:
@@ -287,6 +289,41 @@ The first line takes the timer (how long an object has oscilated for) and the fr
 
 
 <h2>Riding platforms</h2>
+Moving platforms are useless without the ability to stand on them. In our engine, we did not have the capability to parent objects to other objects, so we could not just "attach" the player to the platform. Instead, I added code to the oscillator script to make it move any players that are on the platform when the platform moves.
+
+![image](\assets\hellPlatformStand.gif)
+<h6>Players can stand on moving platforms.</h6>
+I wasn't done yet however. I wanted to convey a feeling of momentum when on the platform, such that then the player leaves, they retain the velocity they had when standing on the platform. To do this, I set the velocity of the platform's physics object when it moves:
+
+```cpp
+void ObjectOscillator::UpdateOscillation(float dt) {
+    ...
+    Vector3 changeInPosition = (gameObject->GetTransform().GetPosition() - lastPos);
+    lastVelocity = changeInPosition / dt;
+    phys->SetLinearVelocity(lastVelocity); //do this so they can push things around!
+
+    for (std::pair<GameObject*, bool> pair : objectsOnPlatform) {
+        if (pair.second) {
+            Transform* t = pair.first->GetTransformPointer();
+            t->SetPosition(t->GetPosition() + changeInPosition);
+        }
+    }
+}
+```
+
+Then, when a player leaves the platform, we apply an impulse equal to the velocity of the platform:
+
+```cpp
+void ObjectOscillator::OnCollisionEnd(GameObject* other) {
+    if (other->GetTag() == PLAYER) {
+        objectsOnPlatform[other] = false;
+        other->GetPhysicsObject()->ApplyLinearImpulse(lastVelocity);
+    }
+}
+```
+
+Surely by setting the velocity of the physics object, the platform will move in unintended ways when we integrate it's velocity? The solution to this was to ignore moving platforms when integrating velocity, along with any other objects that do not need it, such as the static ground blocks.
+
 
 <h2>Grappling platforms</h2>
 A big flaw in the game to this point was that the grappling hook could not attach to moving objects: once the grapple point had been set, it would not change. This was not acceptable when I added platforms, as it felt very unsatisfying to grapple a moving platform, only for the hook to remain still.
@@ -304,17 +341,13 @@ To do this, I utilised Unity's editor gizmo tools to draw the mesh of the object
 
 The code to move the platform over time in Unity is the exact same as the C++ code, albeit with some language function translations. The platform visualisations therefore behave exactly as they would in the actual game.
 
-
-
-
 <h1>What went well</h1>
 I am quite happy with the final result overall, as it was more polished than I was expecting, and it was also genuinely fun to play in multiplayer, even though the gameplay was simplistic. Since we kept the scope of the game low throught the project, we managed to hit nearly all our feature targets.
 
-I am especially happy that I managed to add in the level select, and that it behaved as you would expect.
-One of the most satisfying moments in the project was the animation system's networking.
+I am especially happy that I managed to add in the level select, as this was a feature I really wanted when we decided on a level based game.
+One of the most satisfying moments in the project was the animation system's networking. After getting the transitions to function, I started to add the code to network it all. However, the only way to test if it worked was after all of it was programmed. Once I had finished coding the networking for it, I ran the game and it worked exactly as I hoped it would, without any issues, and I felt quite proud.
 
 <h1>What I would improve</h1>
-My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5. Making the game work on the PS5 would have taken a long time.
+My main regret from the project was not having a chance to do any development with the PS5 Devkits, as our team did not attempt to port the game to PS5. There were a few reasons for this, primarily time constraints. We decided as a team that we would prefer a more polished, finished game that only works on PC rather than a less polished one that may or may not even work on PS5. Making the game work on the PS5 would have taken a long time, as all of the rendering code would have had to be changed, and we did not have a dedicated graphics programmer on our team to figure it out.
 
-Some parts of the game were not fully complete and functional: the player's were supposed to play a victory animation once reaching the end, but this had a bug and did not always play. I unfortunately did not have enough time to fix this bug. I added functionality to the menu exit button, but this did not get PRd in time for the final submission (!). Additionally, the menu funcionality could have been smoother, as once you had entered gameplay, there was no way to return to the menu without closing and reopening the game.
-
+Some parts of the game were not fully complete and functional: the players were supposed to play a victory animation once reaching the end, but this had a bug and did not always play. I unfortunately did not have enough time to fix this bug. I added functionality to the menu exit button, but this did not get PRd in time for the final submission (!). Additionally, the menu funcionality could have been smoother, as once you had entered gameplay, there was no way to return to the menu without closing and reopening the game.
