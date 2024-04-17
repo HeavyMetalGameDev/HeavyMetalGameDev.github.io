@@ -4,6 +4,7 @@ layout: project
 title: CSC3231 Planet of the Goblins
 thumbnail: \assets\planet.png
 videolink: https://www.youtube.com/watch?v=MHjQRban0YA
+youtubeId: _MpYXfFhobM
 shortdescription: Graphical project created in Unity.
 permalink: /CSC3231
 priority: 2

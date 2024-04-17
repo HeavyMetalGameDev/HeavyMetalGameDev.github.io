@@ -4,6 +4,7 @@ layout: project
 title: CSC8502 Greenbulon 7
 thumbnail: \assets\greenbulon.png
 videolink: https://www.youtube.com/watch?v=92fHMh4TBgQ
+youtubeId: 92fHMh4TBgQ
 shortdescription: Graphical project created using C++ and OpenGL.
 permalink: /CSC8502
 priority: 2

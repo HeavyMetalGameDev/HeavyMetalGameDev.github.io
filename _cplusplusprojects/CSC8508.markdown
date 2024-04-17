@@ -4,6 +4,7 @@ layout: project
 title: Hellrunners - CSC8508 Team Project
 thumbnail: \assets\hellrunners.png
 videolink: TBA
+youtubeId: _MpYXfFhobM
 shortdescription: C++ 8 week team project.
 permalink: /CSC8508
 priority: 1
