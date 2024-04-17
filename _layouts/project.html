@@ -4,8 +4,7 @@ layout: default
 <h1>{{page.title}}</h1>
 
 <b>Video link: </b>
-<a href={{page.videolink}}>
-    <img src={{page.thumbnail}} alt={{page.title}}>
+<iframe width="1280" height="720" src={{page.videolink}} title={{page.title}} frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </a>
 
 {{content}}
