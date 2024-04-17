@@ -4,6 +4,7 @@ layout: project
 title: CSC3232 Mean Green Fellow 2
 thumbnail: \assets\gobThumb.png
 videolink: https://www.youtube.com/watch?v=_MpYXfFhobM
+youtubeId: _MpYXfFhobM
 shortdescription: Physics, AI and Gameplay project created in Unity.
 permalink: /CSC3232
 priority: 4
