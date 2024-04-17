@@ -3,7 +3,7 @@
 layout: project
 title: Goo Surge (Pirate Software Game Jam 2024)
 thumbnail: \assets\gooSurge.png
-videolink: youtube.com
+videolink: https://www.youtube.com/watch?v=oQwHR7VOWQQ
 shortdescription: 2 week game jam project in Unity, made in a team with my coursemates, utilising Compute Shaders.
 permalink: /Goo-Surge
 priority: 1
