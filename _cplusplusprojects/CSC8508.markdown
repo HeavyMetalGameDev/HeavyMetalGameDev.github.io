@@ -9,11 +9,13 @@ shortdescription: C++ 8 week team project.
 permalink: /CSC8508
 priority: 1
 ---
-<h1> VIDEO COMING SOON <h1>
+<h1> VIDEO COMING SOON </h1>
 <h2>Team Mark: 82%      Individual Mark: 88%</h2>
 <h1>Summary</h1>
 CSC8508 was my team project module, to create a game in C++ in 8 weeks.
-My main contributions to the project were: 
+
+My main contributions to the project were
+
 - Simple component system (created in my previous coursework, CSC8503)
 - Physics broadphase rework using Sort & Sweep.
 - Extra physics system features such as collision layers and physics materials.
