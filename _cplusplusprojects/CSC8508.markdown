@@ -9,11 +9,13 @@ shortdescription: C++ 8 week team project.
 permalink: /CSC8508
 priority: 1
 ---
-<h1> VIDEO COMING SOON <h1>
+<h1> VIDEO COMING SOON </h1>
 <h2>Team Mark: 82%      Individual Mark: 88%</h2>
 <h1>Summary</h1>
 CSC8508 was my team project module, to create a game in C++ in 8 weeks.
-My main contributions to the project were: 
+
+My main contributions to the project were
+
 - Simple component system (created in my previous coursework, CSC8503)
 - Physics broadphase rework using Sort & Sweep.
 - Extra physics system features such as collision layers and physics materials.
@@ -30,14 +32,18 @@ My main contributions to the project were:
 
 Since I was on the MComp course, for the first 4 weeks of the module, I also had a non-games module to study, meaning my contributions in the first half were lower than I would have liked.
 
+![image](\assets\hellMulti.gif)
+<h6>Multiple players playing the game.</h6>
+
 <h1>Component System</h1>
-The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the last coursework, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
+The first task I did in the project was to research and implement a component system for the project. I had created a simple one in the <a href = "/CSC8503">last coursework</a>, but another team member suggested moving to a full Entity Component System instead. We found a library called entt and looked into how to use it, but ultimately we settled on using my original system, as the base engine we were provided would require lots of code changes to work with entt and would not have been worth the time.
 
 <h1>Deferred Rendering</h1>
 
 For the implementation of the deferred rendering, I did not want to affect the look of the game too much, just allow for more lights in the scene. I therefore decided to take a hybrid approach to rendering: I left the standard forward lighting pass in the game for the directional light, and added extra passes afterwards for the deferred lights. By doing this, the game looked exactly the same as it did before (since the only light was the directional light), but it now supported adding extra deferred lights.
 
 Since there were very few lights in most levels, the performance impact of this was minimal.
+Check my <a href="/CSC8502"> CSC8502 page </a> for more information regarding my deferred rendering.
 
 <h1>Physics changes</h1>
 I made a few simple changes to the physics system to allow for more control: physics materials and collision layers. Collision layers were especially important as they had a large impact on speeding up the performance of the game: in the broad phase of the collision detection, we can ignore pairs of objects where their layers have been set to not collide.
@@ -256,6 +262,86 @@ When we decided our game was going to be level based, a feature I really wanted 
 
 When imagining the level select, I had two ideas in mind for the UI: A thumbnail image showing the level, and the name of the level above it.
 
+Adding the UI involved adding some extra LUA code to the MainMenu.lua file:
+
+```lua
+...
+        {
+            color = COLORS.white,
+            image = "hellMain/ArrowLeft.png",
+            aSize = Vector2:new(70, 70),
+            align = {
+                AlignTo("top", 157),
+                AlignTo("left", 120)
+            },
+            id = "DecreaseLevel"
+        },
+
+        {
+            color = COLORS.white,
+            image = "hellMain/ArrowRight.png",
+            aSize = Vector2:new(70, 70),
+            align = {
+                AlignTo("top", 157),
+                AlignTo("left", 450)
+            },
+            id = "IncreaseLevel"
+        },
+
+        {
+            text = {
+            text = "Select Level",
+            color = COLORS.white,
+            size = 0.45,
+            },
+            align = {
+                AlignTo("top", 200),
+                AlignTo("left", 210)
+            },
+            id = "LevelName"
+        },
+
+        {
+            color = COLORS.white,
+            image = "LevelThumbnails/Level 1 - Adam Test.png",
+            aSize = Vector2:new(480, 320),
+            align = {
+                AlignTo("top", 230),
+                AlignTo("left", 100)
+            },
+            id = "LevelThumbnail"
+        },
+...
+```
+Each block represents a different UI element, and their specific values can be changed in C++ code by accessing them using their `id` variable.
+When the client receives the id for a level, these functions are used:
+
+```cpp
+void MenuState::HandleLevelInt(int level) {
+    currentClientLevel = level;
+    std::string levelName = reader->GetLevelName(level);
+    UpdateLevelName(levelName);
+    UpdateLevelThumbnail(levelName);
+}
+
+void MenuState::UpdateLevelName(std::string levelName) {
+    auto& textElement = canvas->GetElementById("LevelName", "lobby");
+    auto& textElementData = textElement.GetTextData();
+    textElementData.text = levelName;
+}
+
+void MenuState::UpdateLevelThumbnail(std::string levelName) {
+    auto& imageElement = canvas->GetElementById("LevelThumbnail", "lobby");
+    imageElement.SetTexture(levelThumbnails[levelName]);
+}
+```
+Which will update the name and thumbnail image of the level being show, as below.
+
+![image](\assets\hellSelect.gif)
+<h6>Level can be selected from the lobby.</h6>
+
+
+
 <h1>Moving platforms</h1>
 The game's levels felt very static, as there was not many moving parts to the levels. I decided to add moving platforms and spikes to the game.
 For this, I made a general component to move objects between two points over time, which was coded such that both moving platforms and spikes use the exact same component:
@@ -329,6 +415,9 @@ Surely by setting the velocity of the physics object, the platform will move in 
 <h2>Grappling platforms</h2>
 A big flaw in the game to this point was that the grappling hook could not attach to moving objects: once the grapple point had been set, it would not change. This was not acceptable when I added platforms, as it felt very unsatisfying to grapple a moving platform, only for the hook to remain still.
 I decided to fix this my altering the grappling hook itsself instead of the moving platforms. The hook will now update the point to apply force towards whenever the object that was grappled changes position.
+
+![image](\assets\hellSwing.gif)
+<h6>The player grapples the moving objects to swing through the level.</h6>
 
 <h1>Unity Tools</h1>
 For the project, we decided to use the Unity editor as a level creation tool: we build the level in Unity, placing blocks and objects, then export the level to JSON which will be read by the C++ game.

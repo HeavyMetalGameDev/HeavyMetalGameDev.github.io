@@ -10,5 +10,5 @@ layout: home
 I am a graduate games programmer looking to get into the industry and learn from a talented development team. To see my projects, go to my Portfolio page.
 
 <h1>Most Recent</h1>
-<a href = "/Goo-Surge">![image](\assets\gooSurge.png)</a>
+<a href = "/CSC8508">![image](\assets\hellrunners.png)</a>
 

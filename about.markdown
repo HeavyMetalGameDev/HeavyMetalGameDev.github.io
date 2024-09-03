@@ -10,9 +10,7 @@ My programming interests vary: I typically find any aspect of games programming 
 
 **I am currently working on:**
 
--University Team project. A C++ team project to create a game, basically from scratch, in 8 weeks!
-
--Hogworld. Hogworld was born out of the intention to create a finished, interesting portfolio piece, and will be a small videogame created in Unity. My main reason for doing this project was to try some systems I have not done before, such as programming a tile based world and interaction system from scratch, and a dialogue system.
+-Hogworld. Hogworld was born out of the intention to create a finished, interesting game, and will be a small videogame created in Unity. My main reason for doing this project was to try some systems I have not done before, such as programming a tile based world and interaction system from scratch, a dialogue system, and an ability system.
 
 ![image](\assets\mypicture.jpg)
 
