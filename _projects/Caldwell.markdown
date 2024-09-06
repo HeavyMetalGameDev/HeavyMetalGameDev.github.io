@@ -11,6 +11,9 @@ priority: 2
 ---
 
 PAGE IN PROGRESS
+
+Playable at:
+<iframe frameborder="0" src="https://itch.io/embed/2866540?bg_color=191919&amp;fg_color=ffffff&amp;link_color=914890&amp;border_color=e7a833" width="552" height="167"><a href="https://heavymetalgamedev.itch.io/the-case-of-caldwell-concoctions">The Case of Caldwell Concoctions by HeavyMetalGameDev</a></iframe>
 <h1>Summary</h1>
 The Case of Caldwell Concoctions is a game I created in 2 weeks as a solo project, as my submission to the Pirate Software Game Jam 15. From a technical standpoint, it is simpler than my other projects and did not involve much complex programming, instead focusing more on story and environmental details. The game did however feature:
 - A complete, short story experience with a finished ending.
