@@ -4,6 +4,8 @@ title: About
 permalink: /about/
 ---
 
+CV HERE: <a href = "https://docs.google.com/document/d/1KOwjW-l4l9JRv9xnM8Le-wi27mvVDTj4VRkFWfiETAg/edit?usp=sharing">https://docs.google.com/document/d/1KOwjW-l4l9JRv9xnM8Le-wi27mvVDTj4VRkFWfiETAg/edit?usp=sharing</a>
+
 Hi, I'm HeavyMetalGameDev, or Matthew, an MComp Computer Science with Games Engineering student at Newcastle University, currently in my 4th and final year.
 I'll be graduating in 2024 and will be looking to enter the industry as a Graduate Games Programmer!
 My programming interests vary: I typically find any aspect of games programming interesting, especially more technical tasks.
