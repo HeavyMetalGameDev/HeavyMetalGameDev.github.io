@@ -23,6 +23,8 @@ The Case of Caldwell Concoctions is a game I created in 2 weeks as a solo projec
 - A notebook that will unlock new information as the game progresses.
 - Built for and playable in web browser.
 
+I am also currently working on a slightly expanded and improved Steam release of the game.
+
 <h1>Visuals</h1>
 The visual style of the game was created with a combination of RenderTextures and post processing.
 To achieve the pixelated style, the game first renders the scene to a RenderTexture with a low resolution. This texture is then projected onto another camera, and rendered to the screen. This also means that the UI scales and changes easily as the screen size changes.
@@ -40,6 +42,10 @@ For the game, I wanted to make it such that a player could stop playing the game
 Some more data needs to be saved: the game has the notebook system, where information gets unlocked over time, but if the player misses some information, then that information should stay locked. Therefore, I also used the PlayerPref system to store this information.
 
 The final use of the PlayerPref system was the player's camera sensitivity setting, since this should persist across both levels and game sessions. This value is simply stored as a PlayerPrefs float value, and is set whenever a new level is loaded.
+
+
+<h1>Steam Release</h1>
+I am currently working on the Steam release of the game!
 
 <h1>What went well</h1>
 I was very happy that I managed to get the game fully complete by the deadline of the game jam, which shows that my initial planning and scope for the game was reasonable and appropriate for the timeframe. I received a lot of comments and feedback on the game, a lot of which was positive and praising the aspects I focused on, such as the writing and environmental storytelling.
