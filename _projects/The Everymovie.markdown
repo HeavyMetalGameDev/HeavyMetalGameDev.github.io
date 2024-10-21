@@ -7,7 +7,7 @@ videolink: https://www.youtube.com/watch?v=ctd_rHOdPSU
 youtubeId: ctd_rHOdPSU
 shortdescription: Minigame-based Game Jam created in 2 weeks in Unity.
 permalink: /Everymovie
-priority: 3
+priority: 4
 ---
 
 <h1>Play the Game</h1>
