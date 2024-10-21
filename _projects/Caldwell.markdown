@@ -47,6 +47,11 @@ The final use of the PlayerPref system was the player's camera sensitivity setti
 <h1>Steam Release</h1>
 I am currently working on the Steam release of the game!
 
+<h1>Feedback</h1>
+Although I did not win the jam, the feedback I received was very positive and I had many comments praising the less technical parts of the game, including the story, writing, environmental storytelling and the audio. As a programmer, it was very nice to have these aspects commented about and to hear people enjoy them!
+Included are a few comments and reviews of the game on Itch.IO:
+![image](\assets\caldwellReviews.png)
+
 <h1>What went well</h1>
 I was very happy that I managed to get the game fully complete by the deadline of the game jam, which shows that my initial planning and scope for the game was reasonable and appropriate for the timeframe. I received a lot of comments and feedback on the game, a lot of which was positive and praising the aspects I focused on, such as the writing and environmental storytelling.
 <h1>What I would improve</h1>
