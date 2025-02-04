@@ -3,13 +3,12 @@
 layout: project
 title: Hellrunners - CSC8508 Team Project
 thumbnail: \assets\hellrunners.png
-videolink: TBA
-youtubeId: 
+videolink: https://www.youtube.com/watch?v=5tVJBA8yhHE
+youtubeId: 5tVJBA8yhHE
 shortdescription: C++ 8 week team project.
 permalink: /CSC8508
 priority: 1
 ---
-<h1> VIDEO COMING SOON </h1>
 <h2>Team Mark: 82%      Individual Mark: 88%</h2>
 <h1>Summary</h1>
 CSC8508 was my team project module, to create a game in C++ in 8 weeks.
